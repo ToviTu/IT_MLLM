@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tovi-vol
+spec:
+  storageClassName: seaweedfs-storage-hdd
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Gi
