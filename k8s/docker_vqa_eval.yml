@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: tovitu-mllm-eval
+  name: tovitu-mllm-eval-1
 spec:
   backoffLimit: 0
   template:
@@ -20,7 +20,7 @@ spec:
           limits:
             cpu: "8"
             memory: "64Gi"
-            nvidia.com/gpu: 2
+            nvidia.com/gpu: 1
 
         command: ["stdbuf", "-oL", "-eL", "/bin/bash", "-c"]
         args:

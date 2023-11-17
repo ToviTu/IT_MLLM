@@ -27,7 +27,7 @@ def evaluate_vqa(
     num_shots: int = 8,
     dataset_name: str = "vqav2",
     query_set_size=2048,
-    num_samples=20000,
+    num_samples=1000,
     batch_size=8,
 ):
     train_image_dir_path = DATASET_DIR + "train2014"
@@ -66,12 +66,17 @@ def evaluate_vqa(
 
     query_set = utils.get_query_set(train_dataset, query_set_size)
 
+    counter = 0
     utils.random_seed(seed)
     predictions = []
     for batch in tqdm(
         test_dataloader,
         desc=f"Running inference {dataset_name}",
     ):
+        if counter >= num_samples:
+            break
+        counter += 1
+
         batch_demo_samples = utils.sample_batch_demos_from_query_set(
             query_set, effective_num_shots, len(batch["image"])
         )

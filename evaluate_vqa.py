@@ -1,3 +1,4 @@
+from ast import Num
 from scripts.custom_evaluate import evaluate_vqa
 from scripts.model import EvalModel
 import os
@@ -22,4 +23,4 @@ model_args = {
 print(f"Loading Checkpoint from {CHECKPOINT_DIR}")
 model = EvalModel(model_args)
 print("Starting evaluation")
-print(evaluate_vqa(model))
+print(evaluate_vqa(model, num_samples=10))

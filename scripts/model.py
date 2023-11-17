@@ -46,6 +46,7 @@ class EvalModel(BaseEvalModel):
             model_args["lm_tokenizer_path"],
             cross_attn_every_n_layers=int(model_args["cross_attn_every_n_layers"]),
         )
+
         checkpoint = torch.load(model_args["checkpoint_path"])
         if "model_state_dict" in checkpoint:
             checkpoint = checkpoint["model_state_dict"]
@@ -145,6 +146,7 @@ class EvalModel(BaseEvalModel):
                     max_new_tokens=max_generation_length,
                     num_beams=num_beams,
                     length_penalty=length_penalty,
+                    pad_token_id=50277,
                 )
 
         # Extract only the new gnerated tokens
