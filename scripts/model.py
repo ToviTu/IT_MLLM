@@ -53,7 +53,6 @@ class EvalModel(BaseEvalModel):
             checkpoint = {k.replace("module.", ""): v for k, v in checkpoint.items()}
         self.model.load_state_dict(checkpoint, strict=False)
         self.model.to(self.device, dtype=torch.bfloat16)
-        self.model = torch.nn.DataParallel(self.model)
         self.model.eval()
         self.tokenizer.padding_side = "left"
 

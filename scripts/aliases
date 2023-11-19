@@ -1,0 +1,2 @@
+alias build-push="docker build . -t tovitu/instruct-flamingo:latest; docker push tovitu/instruct-flamingo:latest"
+alias remote-notebook="kubectl apply -f k8s/notebook_pod.yml;"

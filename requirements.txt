@@ -12,3 +12,8 @@ open_clip_torch>=2.16.0
 sentencepiece
 open_flamingo
 jupyter
+datasets
+evaluate
+peft
+accelerate
+trl

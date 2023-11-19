@@ -1,5 +1,3 @@
-from json import load
-from re import split
 import re
 from datasets import load_dataset
 import os
@@ -7,6 +5,8 @@ import random
 import torch
 import requests
 from PIL import Image
+import json
+import tqdm
 
 open_image_url = lambda url: Image.open(requests.get(url, stream=True).raw)
 
@@ -221,6 +221,7 @@ class Base_dataset:
         text = text.strip()
         text = self.processPunctuation(text)
         text = self.processDigitArticle(text)
+        return text
 
     def image_preprocess_batch(self, image_processor, images: list) -> torch.Tensor:
         vision_x = [image_processor(image).unsqueeze(0) for image in images]
@@ -244,9 +245,9 @@ class VQA_dataset(Base_dataset):
     def __init__(self, precision=torch.bfloat16, device=0) -> None:
         super().__init__(precision=precision, device=device)
         self.train_dataset = load_dataset(
-            "Graphcore/vqa", split="train", cache_dir=DATASET_DIR
+            "HuggingFaceM4/VQAv2", split="train", cache_dir=DATASET_DIR
         )
-        self.val_dataset = load_dataset("Graphcore/vqa", split="validation", cache_dir=DATASET_DIR)  # type: ignore
+        self.val_dataset = load_dataset("HuggingFaceM4/VQAv2", split="validation", cache_dir=DATASET_DIR)  # type: ignore
 
     def qa_prompt(self, question, answer=None) -> str:
         return f"<image>Question:{question} Short answer:{answer if answer is not None else ''}{'<|endofchunk|>' if answer is not None else ''}"
@@ -259,7 +260,7 @@ class VQA_dataset(Base_dataset):
             idx = int(random.random() * len(d))
             image = d[idx]["image"]
             question = d[idx]["question"]
-            answers = d[idx]["answers"][0]
+            answers = d[idx]["answers"][0]["answer"]
 
             images.append(image)
             prompt += self.qa_prompt(question, answers) + "\n"
@@ -267,12 +268,143 @@ class VQA_dataset(Base_dataset):
                 prompt = prompt.replace("<image>", "")
         return images, prompt
 
-    def eval(
-        self, model, image_encoder, text_encoder, shots=4, batch_size=8, early_stop=2000
+    def infer(
+        self,
+        model,
+        image_encoder,
+        text_encoder,
+        output_dir,
+        shots=4,
+        batch_size=8,
+        early_stop=2000,
     ):
         predictions = []
-        answers = []
+        tokenizer = self.text_processor_factory(text_encoder, "left")
 
-        for idx in range(0, len(self.val_dataset), batch_size):
-            d_clip = self.val_dataset[idx * batch_size : (idx + 1) * batch_size]
-            questions = d_clip["question"]
+        counter = 0
+        for data in self.val_dataset:
+            if counter > early_stop:
+                break
+            counter += 1
+            question = data["question"]
+            image = data["image"]
+
+            context_image, context_text = self.make_in_context(
+                self.train_dataset, shots=shots
+            )
+            # Encode image
+            image_token = self.image_preprocess_batch(
+                image_encoder, context_image + [image]
+            )
+
+            # Encode text
+            prompt = context_text + self.qa_prompt(question)
+            text_token = tokenizer(prompt)
+
+            # Inference
+            output = model.generate(
+                image_token.to(device=self.device, dtype=self.precision),
+                text_token["input_ids"].to(self.device),
+                attention_mask=text_token["attention_mask"].to(
+                    device=self.device, dtype=self.precision
+                ),
+                max_new_tokens=5,
+                num_beams=3,
+                pad_token_id=50277,
+            )
+            output = text_encoder.decode(output[0])
+            print(output)
+            output = output[len(prompt) :]
+            output = output.replace("<|endofchunk|>", "")
+            output = self.postprocess_vqa_generation(output)
+            output = self.normalize(output)
+
+            predictions.append({"answer": output, "question_id": data["question_id"]})
+        with open(output_dir + "vqa_resutls.json", "w") as f:
+            f.write(json.dumps(predictions, indent=4))
+
+
+class SQUAD_dataset(Base_dataset):
+    def __init__(self, precision=torch.bfloat16, device=0) -> None:
+        super().__init__(precision=precision, device=device)
+        self.train_dataset = load_dataset("squad", split="train", cache_dir=DATASET_DIR)
+        self.val_dataset = load_dataset("squad", split="validation", cache_dir=DATASET_DIR)  # type: ignore
+
+    def qa_prompt(self, context, question, answer=""):
+        return f"{context} Question:{question} Short answer:{answer}" + (
+            "" if answer == "" else "<|endofchunk|>"
+        )
+
+    def make_in_context(self, d, shots=1):
+        d = self.train_dataset
+        prompt = ""
+        for _ in range(shots):
+            idx = int(random.random() * len(d))
+            context = d[idx]["context"]
+            question = d[idx]["question"]
+            answers = d[idx]["answers"]["text"][0]
+
+            prompt += self.qa_prompt(context, question, answers) + "\n"
+
+        return prompt
+
+    def infer(
+        self,
+        model,
+        image_encoder,
+        text_encoder,
+        output_dir,
+        shots=4,
+        batch_size=8,
+        early_stop=2000,
+    ):
+        predictions = []
+        references = []
+        tokenizer = self.text_processor_factory(text_encoder, "left")
+
+        counter = 0
+        for idx in tqdm.tqdm(range(early_stop)):
+            data = self.val_dataset[idx]
+            if counter > early_stop:
+                break
+            counter += 1
+
+            context = data["context"]
+            question = data["question"]
+            image = self.palceholder_image
+
+            context_text = self.make_in_context(self.train_dataset, shots=shots)
+            # Encode image
+            image_token = self.image_preprocess_batch(image_encoder, [image])
+
+            # Encode text
+            prompt = context_text + self.qa_prompt(context, question)
+            text_token = tokenizer(prompt)
+
+            answer_len = max([len(answer) for answer in data["answers"]])
+
+            # Inference
+            output = model.generate(
+                image_token.to(device=self.device, dtype=self.precision),
+                text_token["input_ids"].to(self.device),
+                attention_mask=text_token["attention_mask"].to(
+                    device=self.device, dtype=self.precision
+                ),
+                max_new_tokens=answer_len,
+                num_beams=3,
+                pad_token_id=50277,
+            )
+            output = text_encoder.decode(output[0])
+            output = output[len(prompt) :]
+            output = output.replace("<|endofchunk|>", "")
+            output = self.postprocess_vqa_generation(output)
+            output = self.normalize(output)
+
+            # Put together predictions
+            predictions.append({"prediction_text": output, "id": data["id"]})
+            references.append({"answers": data["answers"], "id": data["id"]})
+
+        with open(output_dir + "squad_resutls.json", "w") as f:
+            f.write(json.dumps(predictions, indent=4))
+        with open(output_dir + "squad_references.json", "w") as f:
+            f.write(json.dumps(references, indent=4))
