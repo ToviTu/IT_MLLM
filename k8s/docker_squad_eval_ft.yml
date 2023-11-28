@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: tovitu-mllm-eval-vqa
+  name: tovitu-mllm-eval-squad-ft-long
 spec:
   backoffLimit: 0
   template:
@@ -25,13 +25,20 @@ spec:
         command: ["stdbuf", "-oL", "-eL", "/bin/bash", "-c"]
         args:
           - >-
-            python scripts/download_pretrained.py;
-            python evaluate_vqa.py
+            python evaluate_squad.py
         env:
           - name: "DATASET_DIR"
             value: "/external/"
           - name: "CHECKPOINT_DIR"
             value: "/external/models/"
+          - name: "LM_PATH"
+            value: "anas-awadalla/mpt-1b-redpajama-200b"
+          - name: "MODEL_PT"
+            value: "fine-tuned-nl-flamingo"
+          - name: "EARLY_STOP"
+            value: "2000"
+          - name: "MAX_LEN"
+            value: "20"
         volumeMounts:
         - mountPath: "/external"
           name: external

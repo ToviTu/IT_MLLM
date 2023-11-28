@@ -1,0 +1,53 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: tovitu-mllm-eval-vqa-ft
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never  # Never | OnFailure
+
+      containers:
+      - name: tovitu-container
+        image: tovitu/instruct-flamingo:latest
+        imagePullPolicy: Always
+
+        resources:
+          requests:
+            cpu: "1"
+            memory: "32Gi"
+          limits:
+            cpu: "8"
+            memory: "64Gi"
+            nvidia.com/gpu: 1
+
+        command: ["stdbuf", "-oL", "-eL", "/bin/bash", "-c"]
+        args:
+          - >-
+            python scripts/download_pretrained.py;
+            python evaluate_vqa.py
+        env:
+          - name: "DATASET_DIR"
+            value: "/external/"
+          - name: "CHECKPOINT_DIR"
+            value: "/external/models/"
+          - name: "LM_PATH"
+            value: "anas-awadalla/mpt-1b-redpajama-200b"
+          - name: "MODEL_PT"
+            value: "fine-tuned-nl-flamingo"
+        volumeMounts:
+        - mountPath: "/external"
+          name: external
+
+      tolerations:
+        - key: "nautilus.io/chase-ci"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+          
+      volumes:
+      - name: external
+        persistentVolumeClaim:
+          claimName: tovi-vol
+    

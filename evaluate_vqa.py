@@ -1,4 +1,3 @@
-from ast import Num
 from scripts.custom_evaluate import evaluate_vqa
 from scripts.model import EvalModel
 import os
@@ -12,9 +11,9 @@ CHECKPOINT_DIR = (
 model_args = {
     "vision_encoder_path": "ViT-L-14",
     "vision_encoder_pretrained": "openai",
-    "lm_path": "anas-awadalla/mpt-1b-redpajama-200b",
-    "lm_tokenizer_path": "anas-awadalla/mpt-1b-redpajama-200b",
-    "checkpoint_path": f"{CHECKPOINT_DIR}/OpenFlamingo-3B-vitl-mpt1b-ft-squad/checkpoint.pt",
+    "lm_path": os.environ["LM_PATH"],
+    "lm_tokenizer_path": os.environ["LM_PATH"],
+    "checkpoint_path": f"{CHECKPOINT_DIR}{os.environ['MODEL_PT']}/checkpoint.pt",
     "cross_attn_every_n_layers": 1,
     "precision": "bf16",
     "device": 0,
@@ -23,4 +22,4 @@ model_args = {
 print(f"Loading Checkpoint from {CHECKPOINT_DIR}")
 model = EvalModel(model_args)
 print("Starting evaluation")
-print(evaluate_vqa(model, num_samples=2000))
+print(evaluate_vqa(model, num_samples=os.environ["EARLY_STOP"]))

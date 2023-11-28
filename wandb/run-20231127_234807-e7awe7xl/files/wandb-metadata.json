@@ -1,0 +1,127 @@
+{
+    "os": "Linux-5.15.133.1-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "python": "3.10.13",
+    "heartbeatAt": "2023-11-28T05:48:08.444118",
+    "startedAt": "2023-11-28T05:48:07.970049",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "<python with no main file>",
+    "codePathLocal": null,
+    "git": {
+        "remote": "git@github.com:ToviTu/Instruction-tuned-Flamingo-MLLM.git",
+        "commit": "19f0a1b9b7c626f6ca9e5ffedfe107af4beceeb1"
+    },
+    "email": "tovitusaikou@gmail.com",
+    "root": "/home/tovitu/codes/Instruction-tuned-Flamingo-MLLM",
+    "host": "THeDunGEonMaCHine",
+    "username": "tovitu",
+    "executable": "/home/tovitu/miniconda3/envs/flamingo/bin/python",
+    "cpu_count": 8,
+    "cpu_count_logical": 16,
+    "cpu_freq": {
+        "current": 3800.0330000000013,
+        "min": 0.0,
+        "max": 0.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 3800.033,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3800.033,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3800.033,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3800.033,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3800.033,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3800.033,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3800.033,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3800.033,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3800.033,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3800.033,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3800.033,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3800.033,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3800.033,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3800.033,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3800.033,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3800.033,
+            "min": 0.0,
+            "max": 0.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 1006.853931427002,
+            "used": 25.295379638671875
+        }
+    },
+    "gpu": "NVIDIA GeForce RTX 3090 Ti",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA GeForce RTX 3090 Ti",
+            "memory_total": 25757220864
+        }
+    ],
+    "memory": {
+        "total": 15.584293365478516
+    }
+}

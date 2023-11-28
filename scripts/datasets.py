@@ -331,7 +331,7 @@ class SQUAD_dataset(Base_dataset):
         self.val_dataset = load_dataset("squad", split="validation", cache_dir=DATASET_DIR)  # type: ignore
 
     def qa_prompt(self, context, question, answer=""):
-        return f"{context} Question:{question} Short answer:{answer}" + (
+        return f"Question:{question}\nContext:{context}\nAnswer:{answer}" + (
             "" if answer == "" else "<|endofchunk|>"
         )
 
@@ -355,7 +355,6 @@ class SQUAD_dataset(Base_dataset):
         text_encoder,
         output_dir,
         shots=4,
-        batch_size=8,
         early_stop=2000,
     ):
         predictions = []
@@ -364,7 +363,8 @@ class SQUAD_dataset(Base_dataset):
 
         counter = 0
         for idx in tqdm.tqdm(range(early_stop)):
-            data = self.val_dataset[idx]
+            random.seed(idx)
+            data = self.val_dataset[int(random.random() * len(self.val_dataset))]
             if counter > early_stop:
                 break
             counter += 1
@@ -381,7 +381,11 @@ class SQUAD_dataset(Base_dataset):
             prompt = context_text + self.qa_prompt(context, question)
             text_token = tokenizer(prompt)
 
-            answer_len = max([len(answer) for answer in data["answers"]])
+            answer_len = max(
+                [len(answer.split()) for answer in data["answers"]["text"]]
+            )
+            if os.environ.get("MAX_LEN") != None:
+                answer_len = int(os.environ["MAX_LEN"])
 
             # Inference
             output = model.generate(
@@ -396,9 +400,11 @@ class SQUAD_dataset(Base_dataset):
             )
             output = text_encoder.decode(output[0])
             output = output[len(prompt) :]
+            print(output)
             output = output.replace("<|endofchunk|>", "")
             output = self.postprocess_vqa_generation(output)
             output = self.normalize(output)
+            print(output)
 
             # Put together predictions
             predictions.append({"prediction_text": output, "id": data["id"]})
