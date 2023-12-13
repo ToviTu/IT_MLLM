@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: tovitu-mllm-eval-vqa-ft
+  name: tovitu-mllm-eval-vqa-ft-visual
 spec:
   backoffLimit: 0
   template:
@@ -37,7 +37,7 @@ spec:
           - name: "MODEL_PT"
             value: "OpenFlamingo-squad-ft"
           - name: "TYPE"
-            value: "checkpoint.pt"
+            value: "visual_checkpoint.pt"
           - name: "EARLY_STOP"
             value: "2000"
           - name: "MAX_LEN"

@@ -282,7 +282,7 @@ class VQA_dataset(Base_dataset):
         tokenizer = self.text_processor_factory(text_encoder, "left")
 
         counter = 0
-        for data in self.val_dataset:
+        for data in tqdm.tqdm(self.val_dataset):
             if counter > early_stop:
                 break
             counter += 1
@@ -313,7 +313,6 @@ class VQA_dataset(Base_dataset):
                 pad_token_id=50277,
             )
             output = text_encoder.decode(output[0])
-            print(output)
             output = output[len(prompt) :]
             output = output.replace("<|endofchunk|>", "")
             output = self.postprocess_vqa_generation(output)
@@ -363,8 +362,9 @@ class SQUAD_dataset(Base_dataset):
 
         counter = 0
         for idx in tqdm.tqdm(range(early_stop)):
-            random.seed(idx)
-            data = self.val_dataset[int(random.random() * len(self.val_dataset))]
+            # random.seed(idx)
+            # data = self.val_dataset[int(random.random() * len(self.val_dataset))]
+            data = self.val_dataset[idx]
             if counter > early_stop:
                 break
             counter += 1
@@ -400,7 +400,6 @@ class SQUAD_dataset(Base_dataset):
             )
             output = text_encoder.decode(output[0])
             output = output[len(prompt) :]
-            print(output)
             output = output.replace("<|endofchunk|>", "")
             output = self.postprocess_vqa_generation(output)
             output = self.normalize(output)

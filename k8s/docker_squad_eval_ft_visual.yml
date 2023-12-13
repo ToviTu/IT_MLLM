@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: tovitu-mllm-eval-vqa-ft
+  name: tovitu-mllm-eval-squad-ft-long-visual
 spec:
   backoffLimit: 0
   template:
@@ -25,8 +25,7 @@ spec:
         command: ["stdbuf", "-oL", "-eL", "/bin/bash", "-c"]
         args:
           - >-
-            python scripts/download_pretrained.py;
-            python evaluate_vqa.py
+            python evaluate_squad.py
         env:
           - name: "DATASET_DIR"
             value: "/external/"
@@ -37,7 +36,7 @@ spec:
           - name: "MODEL_PT"
             value: "OpenFlamingo-squad-ft"
           - name: "TYPE"
-            value: "checkpoint.pt"
+            value: "visual_checkpoint.pt"
           - name: "EARLY_STOP"
             value: "2000"
           - name: "MAX_LEN"
