@@ -1,29 +1,10 @@
 # Instruction-tuned-Flamingo-MLLM
 
-Final project for CSE527A Natural Language Processing at Washington Unversity in Saint Louis. 
+Final project for CSE527A Natural Language Processing at Washington University in Saint Louis. 
 
 ## Abstract
 
-Recent advancements in Large Language Mod-001
-els have enabled Multimodal large language002
-models capable of reasoning with vision and003
-audio signals. However, a common obstacle004
-in building MLLM systems is that end-to-end005
-training causes a significant performance drop006
-in natural language tasks. In this work, We007
-present a fine-tuning method to enhance the nat-008
-ural language understanding abilities by align-009
-ing MLLMs to a performant LLM in a knowl-010
-edge distillation fashion. Model-generated in-011
-context images and responses augment existing012
-datasets with bimodal supervision, strengthen-013
-ing MLLM’s performance in a task-specific014
-0-shot setting. Our method steadily boosts nat-015
-ural language performance while maintaining016
-visual understanding. In the experiments with a017
-small-scaled MLLM, we show improvement in018
-both vision-language and language-only tasks,019
-yet with small training sessions and limited020
-training samples.
+Since the OpenFlamingo family of models provides various versions of the smallest 3B VLM, we evaluate 2 example models to understand their behavior and choose the most appropriate one as the baseline model. We also evaluate the LLM backbone, Mpt-base-1B, to test whether their architecture is susceptible to catastrophic forgetting. The 3 models are OpenFlamingo-base-3B, the instruction-tuned OpenFlamingo-dolly-3B, and the backbone Mpt-base-1B. Since the LLM backbone does not accept visual inputs, its performance on VQAv2 is not evaluated. As a result, the performance of the three models is on par with each other, with the OpenFlmingo-base-3B achieving the highest score.
 
-![Uploading pipeline.png…]()
+
+<img width="812" alt="pipeline" src="https://github.com/ToviTu/Instruction-tuned-Flamingo-MLLM/assets/52998198/b6ec2cc4-14bf-49dc-b45b-60e5f2c447bb">
