@@ -11,7 +11,7 @@ from transformers import AutoTokenizer
 model = AutoModelForCausalLM.from_pretrained(
     "mosaicml/mpt-1b-redpajama-200b",
     trust_remote_code=True,
-    cache_dir="/external/models/",
+    cache_dir="/scratch/t.tovi/models/",
 )
 model.to(device="cuda:0", dtype=torch.bfloat16)
 tokenizer = AutoTokenizer.from_pretrained("mosaicml/mpt-1b-redpajama-200b")
@@ -24,7 +24,7 @@ import tqdm
 import os
 import json
 
-output_dir = "/external/"
+output_dir = "/scratch/t.tovi/results/"
 
 device = 0
 precision = torch.bfloat16
