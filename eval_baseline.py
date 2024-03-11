@@ -4,35 +4,31 @@ from huggingface_hub import hf_hub_download
 import torch
 from PIL import Image
 import requests
-
+import tqdm
+import os
+import json
 from transformers import AutoModelForCausalLM
 from transformers import AutoTokenizer
 
 model = AutoModelForCausalLM.from_pretrained(
-    "mosaicml/mpt-1b-redpajama-200b",
+    "openflamingo/OpenFlamingo-9B-vitl-mpt7b",
     trust_remote_code=True,
     cache_dir="/scratch/t.tovi/models/",
 )
 model.to(device="cuda:0", dtype=torch.bfloat16)
-tokenizer = AutoTokenizer.from_pretrained("mosaicml/mpt-1b-redpajama-200b")
+tokenizer = AutoTokenizer.from_pretrained("openflamingo/OpenFlamingo-9B-vitl-mpt7b")
 
 from scripts.datasets import SQUAD_dataset
 
 dataset = SQUAD_dataset()
-
-import tqdm
-import os
-import json
-
 output_dir = "/scratch/t.tovi/results/"
-
 device = 0
 precision = torch.bfloat16
 predictions = []
 references = []
 
 counter = 0
-for idx in tqdm.tqdm(range(2000)):
+for idx in tqdm.tqdm(range(dataset)):
     data = dataset.val_dataset[idx]
 
     context = data["context"]
