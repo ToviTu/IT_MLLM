@@ -10,6 +10,8 @@ from transformers import AutoProcessor, AutoModelForCausalLM
 from open_flamingo import create_model_and_transforms
 from transformers import Blip2Processor, Blip2ForConditionalGeneration
 from huggingface_hub import hf_hub_download
+import subprocess
+
 
 HF_TOKEN = "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"
 
@@ -109,11 +111,17 @@ class Llava(nn.Module):
                 load_in_4bit=True,
                 bnb_4bit_compute_dtype=torch.float16
             )
+        elif quantization == 'bfloat16':
+            self.precision = torch.bfloat16
+        else:
+            self.precision = torch.float32
+        print(f'Setting precision to {self.precision}')
         
         # Load pretrained weights
         self.model = LlavaForConditionalGeneration.from_pretrained(
             model_id,
-            cache_dir = cache_dir
+            cache_dir = cache_dir,
+            torch_dtype = self.precision
         ).to(self.device)
 
         # Load autoprocessor
@@ -122,20 +130,39 @@ class Llava(nn.Module):
             cache_dir = cache_dir
         )
 
+        print('--------------Finished Loading Model--------------')
+        output = subprocess.check_output(
+            ["nvidia-smi", 
+            "--query-gpu=memory.total,memory.used,memory.free", 
+            "--format=csv,nounits,noheader"], 
+            encoding='utf-8'
+        )
+
+        # Print the output
+        print(output)
+
     def forward(self, text, image=None):
 
         # Encode inputs
-        inputs = self.processor(text=text, images=image, return_tensors='pt').to(self.device)
+        inputs = self.processor(text=text, images=image, return_tensors='pt').to(self.device, self.precision)
 
         # Forward
         return self.model(**inputs)
     
-    def generate(self, text, image, **gargs):
+    def generate(self, text, image=None, **gargs):
 
         with torch.no_grad():
 
             # Encode inputs
-            inputs = self.processor(text=text, images=image, return_tensors='pt').to(self.device)
+            inputs = self.processor(text=text, images=image, return_tensors='pt')
+
+            # Move to the proper device
+            inputs = {
+                'input_ids': inputs['input_ids'].to(self.device),
+                'attention_mask': inputs['attention_mask'].to(self.device),
+                'pixel_values': inputs['pixel_values'].to(self.device, self.precision) \
+                                if inputs['pixel_values'] is not None else None,
+            }
 
             # Generate
             preds = self.model.generate(**inputs, **gargs)

@@ -18,3 +18,4 @@ peft
 accelerate
 trl
 huggingface_hub
+bitsandbytes

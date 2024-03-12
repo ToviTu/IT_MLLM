@@ -1,9 +1,9 @@
 '''
-Simple diagnosis script to make sure OpenFlamingo runs in 
+Simple diagnosis script to make sure BLIP2 runs in 
 the current environment
 '''
 
-from scripts.model_util import OFlamingo
+from src.model_util import OFlamingo
 from PIL import Image
 import requests
 

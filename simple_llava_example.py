@@ -3,7 +3,7 @@ Simple diagnosis script to make sure LLava runs in
 the current environment
 '''
 
-from scripts.model_util import Llava
+from src.model_util import Llava
 from PIL import Image
 import requests
 
