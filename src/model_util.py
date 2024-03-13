@@ -215,3 +215,48 @@ class Blip2(nn.Module):
 
         # Decode
         return self.processor.batch_decode(preds, skip_special_tokens=True, clean_up_tokenization_spaces=False)
+
+class Yi(nn.Module):
+
+    '''
+    A wrapper for the pretrained model
+    '''
+
+    def __init__(self, cache_dir='/scratch/t.tovi/models/', quantization="False", model_id="01-ai/Yi-34B-Chat"):
+        super().__init__()
+
+        # Default to gpu
+        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        
+        # Load pretrained weights
+        self.model =  AutoModelForCausalLM.from_pretrained(
+            model_id,
+            cache_dir = cache_dir
+        ).to(self.device)
+
+        # Load autoprocessor
+        self.processor = AutoTokenizer.from_pretrained(
+            model_id,
+            cache_dir = cache_dir
+        )
+
+    def forward(self, text):
+
+        # Encode inputs
+        inputs = self.processor(text=text, return_tensors='pt').to(self.device)
+
+        # Forward
+        return self.model(**inputs)
+    
+    def generate(self, text, **gargs):
+
+        with torch.no_grad():
+
+            # Encode inputs
+            inputs = self.processor(text=text, return_tensors='pt').to(self.device)
+
+            # Generate
+            preds = self.model.generate(**inputs, **gargs)
+
+        # Decode
+        return self.processor.batch_decode(preds, skip_special_tokens=True, clean_up_tokenization_spaces=False)

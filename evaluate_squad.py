@@ -1,27 +1,26 @@
 from src.evaluate_util import SQuAD
 from src.model_util import *
+from src.prompt_template import llava_cqa
 import json
 import tqdm
 
-batch_size = 32
-
-template = lambda q, c: f"Context: {c}\nUser: {q}\nAssistant:"
+batch_size = 16
 
 model = Llava(quantization='bfloat16')
 data = SQuAD()
-val_data = data.get_eval_set(model.processor, template)
+val_data = data.get_eval_set(model.processor, llava_cqa)
 
 answers = []
-for idx in tqdm.tqdm(range(0, len(val_data), batch_size)): #len(val_data) - batch_size
+for idx in tqdm.tqdm(range(0, len(val_data) + batch_size, batch_size)): 
     batch = val_data[idx: idx+batch_size]
-    ids = batch['id'],
+    ids = batch['id']
     encoded_text = {
         'input_ids': batch['input_ids'].to(model.device),
         'attention_mask': batch['attention_mask'].to(model.device)
     }
 
     with torch.no_grad():
-        preds = model.model.generate(**encoded_text, pixel_values=None, max_new_tokens=100)
+        preds = model.model.generate(**encoded_text, pixel_values=None, max_new_tokens=1024)
         predicted_texts = model.processor.batch_decode(preds, skip_special_tokens=True)
     
     answers += [
