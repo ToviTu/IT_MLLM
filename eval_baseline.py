@@ -9,18 +9,12 @@ import os
 import json
 from transformers import AutoModelForCausalLM
 from transformers import AutoTokenizer
+from scr.model_util import Llava
+model = Llava()
 
-model = AutoModelForCausalLM.from_pretrained(
-    "openflamingo/OpenFlamingo-9B-vitl-mpt7b",
-    trust_remote_code=True,
-    cache_dir="/scratch/t.tovi/models/",
-)
-model.to(device="cuda:0", dtype=torch.bfloat16)
-tokenizer = AutoTokenizer.from_pretrained("openflamingo/OpenFlamingo-9B-vitl-mpt7b")
 
-from scripts.datasets import SQUAD_dataset
-
-dataset = SQUAD_dataset()
+from scr.evaluate_util import GSM8K
+dataset = GSM8K()
 output_dir = "/scratch/t.tovi/results/"
 device = 0
 precision = torch.bfloat16
@@ -65,7 +59,7 @@ for idx in tqdm.tqdm(range(dataset)):
     predictions.append({"prediction_text": output, "id": data["id"]})
     references.append({"answers": data["answers"], "id": data["id"]})
 
-with open(output_dir + "squad_resutls.json", "w") as f:
+with open(output_dir + "GSM8K_LLaVA_results.json", "w") as f:
     f.write(json.dumps(predictions, indent=4))
-with open(output_dir + "squad_references.json", "w") as f:
+with open(output_dir + "GSM8K_LLaVA_references.json", "w") as f:
     f.write(json.dumps(references, indent=4))
