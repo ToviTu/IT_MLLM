@@ -6,10 +6,11 @@ from torch import nn
 from transformers import BitsAndBytesConfig
 from transformers import pipeline
 from transformers import LlavaForConditionalGeneration
-from transformers import AutoProcessor, AutoModelForCausalLM
+from transformers import AutoProcessor, AutoModelForCausalLM, AutoTokenizer
 from open_flamingo import create_model_and_transforms
 from transformers import Blip2Processor, Blip2ForConditionalGeneration
 from huggingface_hub import hf_hub_download
+from transformers import AutoTokenizer, LlamaForCausalLM
 import subprocess
 
 
@@ -90,7 +91,6 @@ class OFlamingo(nn.Module):
             attention_mask=lang_x["attention_mask"],
             **gargs
         )
-
 
 class Llava(nn.Module):
 
@@ -222,23 +222,76 @@ class Yi(nn.Module):
     A wrapper for the pretrained model
     '''
 
-    def __init__(self, cache_dir='/scratch/t.tovi/models/', quantization="False", model_id="01-ai/Yi-34B-Chat"):
+    def __init__(self, cache_dir='/scratch/t.tovi/models/', model_id="01-ai/Yi-34B-Chat"):
         super().__init__()
 
         # Default to gpu
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        self.precision = torch.bfloat16
         
         # Load pretrained weights
         self.model =  AutoModelForCausalLM.from_pretrained(
             model_id,
-            cache_dir = cache_dir
-        ).to(self.device)
+            cache_dir = cache_dir,
+            device_map=self.device,
+            torch_dtype='auto'
+        )
 
         # Load autoprocessor
         self.processor = AutoTokenizer.from_pretrained(
             model_id,
             cache_dir = cache_dir
         )
+
+    def forward(self, text):
+
+        # Encode inputs
+        inputs = self.processor(text=text, return_tensors='pt').to(self.device)
+
+        # Forward
+        return self.model(**inputs)
+    
+    def generate(self, text, **gargs):
+
+        with torch.no_grad():
+
+            # Encode inputs
+            inputs = self.processor(text=text, return_tensors='pt', padding=True).to(self.device)
+
+            # Generate
+            preds = self.model.generate(**inputs, **gargs)
+
+        # Decode
+        return self.processor.batch_decode(preds, skip_special_tokens=True, clean_up_tokenization_spaces=False)
+
+class Llama2(nn.Module):
+
+    '''
+    A wrapper for the pretrained model
+    '''
+
+    def __init__(self, cache_dir='/scratch/t.tovi/models/', model_id="meta-llama/Llama-2-7b-chat-hf"):
+        super().__init__()
+
+        # Default to gpu
+        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        self.precision = torch.bfloat16
+        
+        # Load pretrained weights
+        self.model =  LlamaForCausalLM.from_pretrained(
+            model_id,
+            cache_dir = cache_dir,
+            token=HF_TOKEN,
+        ).to(self.device, self.precision)
+
+        # Load autoprocessor
+        self.processor = AutoTokenizer.from_pretrained(
+            model_id,
+            cache_dir = cache_dir,
+            token=HF_TOKEN,
+        )
+        self.processor.pad_token = "[PAD]"
+        self.processor.padding_side = "left"
 
     def forward(self, text):
 

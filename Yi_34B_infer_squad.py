@@ -4,16 +4,14 @@ from src.prompt_template import llava_cqa
 import json
 import tqdm
 
-# Parameters
 batch_size = 16
 
-# Model
-model = Yi()
-model.eval()
-
-# Data
+model = Llava(quantization='bfloat16')
 data = SQuAD()
 val_data = data.get_eval_set(model.processor, llava_cqa)
+
+# Load ft model
+model.load_state_dict(torch.load('/scratch/t.tovi/models/llava_ft'))
 
 answers = []
 for idx in tqdm.tqdm(range(0, len(val_data), batch_size)): 

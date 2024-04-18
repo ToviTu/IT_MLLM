@@ -4,14 +4,9 @@ from src.prompt_template import llava_cqa
 import json
 import tqdm
 
-# Parameters
 batch_size = 16
 
-# Model
-model = Yi()
-model.eval()
-
-# Data
+model = Llama2()
 data = SQuAD()
 val_data = data.get_eval_set(model.processor, llava_cqa)
 
@@ -25,7 +20,7 @@ for idx in tqdm.tqdm(range(0, len(val_data), batch_size)):
     }
 
     with torch.no_grad():
-        preds = model.model.generate(**encoded_text, pixel_values=None, max_new_tokens=1024, use_cache=True)
+        preds = model.model.generate(**encoded_text, max_new_tokens=1024)
         predicted_texts = model.processor.batch_decode(preds, skip_special_tokens=True)
     
     # Make sure to extract the new tokens only
@@ -35,9 +30,9 @@ for idx in tqdm.tqdm(range(0, len(val_data), batch_size)):
 
     # Save periodically
     if len(answers) % (batch_size * 8) == 0:
-        with open('/scratch/t.tovi/results/squad_prediction_ft.json', 'w') as f:
+        with open('/scratch/t.tovi/results/squad_prediction.json', 'w') as f:
             json.dump(answers, f)
 
 # Save final predictions
-with open('/scratch/t.tovi/results/squad_prediction_ft.json', 'w') as f:
+with open(f'/scratch/t.tovi/results/llama2-7B_squad-prediction.json', 'w') as f:
     json.dump(answers, f)
