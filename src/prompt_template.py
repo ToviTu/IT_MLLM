@@ -1,3 +1,8 @@
+# Prompt templates for Vicuna
+vicuna_instruct = "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions.\n\n"
+vicuna_qa = lambda q, a: f"{vicuna_instruct}USER: {q}\nASSISTANT: {a}"
+vicuna_cqa = lambda c, q, a: f"{vicuna_instruct}{c}\nUSER: {q}\nASSISTANT: {a}"
+
 # Prompt templates for LLaVA
 
 llava_qa = lambda q, a: f"User: {q}\nAssistant: {a}"

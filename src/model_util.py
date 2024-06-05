@@ -13,7 +13,6 @@ from huggingface_hub import hf_hub_download
 from transformers import AutoTokenizer, LlamaForCausalLM
 import subprocess
 
-
 HF_TOKEN = "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"
 
 class OFlamingo(nn.Module):
@@ -130,16 +129,16 @@ class Llava(nn.Module):
             cache_dir = cache_dir
         )
 
-        print('--------------Finished Loading Model--------------')
-        output = subprocess.check_output(
-            ["nvidia-smi", 
-            "--query-gpu=memory.total,memory.used,memory.free", 
-            "--format=csv,nounits,noheader"], 
-            encoding='utf-8'
-        )
+        # print('--------------Finished Loading Model--------------')
+        # output = subprocess.check_output(
+        #     ["nvidia-smi", 
+        #     "--query-gpu=memory.total,memory.used,memory.free", 
+        #     "--format=csv,nounits,noheader"], 
+        #     encoding='utf-8'
+        # )
 
-        # Print the output
-        print(output)
+        # # Print the output
+        # print(output)
 
     def forward(self, text, image=None):
 
@@ -154,7 +153,7 @@ class Llava(nn.Module):
         with torch.no_grad():
 
             # Encode inputs
-            inputs = self.processor(text=text, images=image, return_tensors='pt')
+            inputs = self.processor(text=text, images=image, padding=True, return_tensors='pt')
 
             # Move to the proper device
             inputs = {
@@ -222,18 +221,18 @@ class Yi(nn.Module):
     A wrapper for the pretrained model
     '''
 
-    def __init__(self, cache_dir='/scratch/t.tovi/models/', model_id="01-ai/Yi-34B-Chat"):
+    def __init__(self, cache_dir='/scratch/t.tovi/models/', model_id="01-ai/Yi-1.5-34B-Chat"):
         super().__init__()
 
         # Default to gpu
-        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.precision = torch.bfloat16
         
         # Load pretrained weights
         self.model =  AutoModelForCausalLM.from_pretrained(
             model_id,
             cache_dir = cache_dir,
-            device_map=self.device,
+            device_map="auto",
             torch_dtype='auto'
         )
 
@@ -251,7 +250,7 @@ class Yi(nn.Module):
         # Forward
         return self.model(**inputs)
     
-    def generate(self, text, **gargs):
+    def generate(self, text, skip_special_tokens=True, clean_up_tokenization_spaces=False, **gargs):
 
         with torch.no_grad():
 
@@ -262,7 +261,7 @@ class Yi(nn.Module):
             preds = self.model.generate(**inputs, **gargs)
 
         # Decode
-        return self.processor.batch_decode(preds, skip_special_tokens=True, clean_up_tokenization_spaces=False)
+        return self.processor.batch_decode(preds, skip_special_tokens=skip_special_tokens, clean_up_tokenization_spaces=clean_up_tokenization_spaces)
 
 class Llama2(nn.Module):
 

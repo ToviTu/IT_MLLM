@@ -1,3 +1,4 @@
 #! /bin/bash
 
-singularity run --nv --bind /scratch/ ./instruct-flamingo_latest.sif python ./Instruction-tuned-Flamingo-MLLM/evaluate_squad_copy.py
+. /home/research/jianhong.t/Instruction-tuned-Flamingo-MLLM/src/set_environ_var.sh
+singularity run --nv --bind /scratch,/storage1 /scratch/t.tovi/instruct-flamingo_latest.sif python /home/research/jianhong.t/Instruction-tuned-Flamingo-MLLM/eval_squad_llava.py
