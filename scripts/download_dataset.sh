@@ -20,3 +20,7 @@ unzip -d $OUTPUT_DIR ${OUTPUT_DIR}ARC-V1-Feb20
 # Download CommonsenseQA
 wget -P $OUTPUT_DIR https://s3.amazonaws.com/commensenseqa/train_rand_split.jsonl
 
+# Download LLaVA pretraining dataset
+wget -P $OUTPUT_DIR https://huggingface.co/datasets/liuhaotian/LLaVA-Pretrain/resolve/main/blip_laion_cc_sbu_558k.json
+wget -P $OUTPUT_DIR https://huggingface.co/datasets/liuhaotian/LLaVA-CC3M-Pretrain-595K/resolve/main/images.zip
+unzip -d ${OUTPUT_DIR}images/ ${OUTPUT_DIR}images.zip
