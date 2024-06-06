@@ -1,10 +1,15 @@
 # Start from a PyTorch image with CUDA
 FROM pytorch/pytorch:2.1.2-cuda11.8-cudnn8-runtime
 
+ENV DEBIAN_FRONTEND noninteractive
+
 # Set the working directory in the container
 WORKDIR /app
 RUN mkdir /dataset/
 RUN mkdir /models/
+
+COPY . .
+
 RUN apt-get update
 
 RUN apt-get install -y --no-install-recommends \
@@ -35,4 +40,7 @@ RUN apt-get install -y --no-install-recommends \
     vim
 
 # Install any dependencies
-RUN pip install -r requirements.txt
+#RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -e .
+RUN pip install -e ".[train]"
+RUN pip install flash-attn

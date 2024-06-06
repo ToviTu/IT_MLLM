@@ -1,0 +1,5 @@
+# To run in chenguange nodes
+alias gpu_pod="singularity run --nv --bind /scratch,/storage1 /storage1/chenguangwang/Active/t.tovi/instruct-flamingo_latest.sif /bin/bash"
+
+# To run in engr entry poiint
+alias chenguang01="bsub -m "chenguang01" -Is -gpu "num=1" /bin/bash"
