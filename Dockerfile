@@ -1,5 +1,6 @@
 # Start from a PyTorch image with CUDA
 FROM pytorch/pytorch:2.1.2-cuda11.8-cudnn8-runtime
+#FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu20.04
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -11,7 +12,6 @@ RUN mkdir /models/
 COPY . .
 
 RUN apt-get update
-
 RUN apt-get install -y --no-install-recommends \
     wget \
     curl \
@@ -39,8 +39,20 @@ RUN apt-get install -y --no-install-recommends \
     hdf5-tools\
     vim
 
+RUN apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add the official NVIDIA repository for CUDA Toolkit packages
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin \
+    && mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600 \
+    && wget https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda-repo-ubuntu2004-11-8-local_11.8.0-520.61.05-1_amd64.deb \
+    && dpkg -i cuda-repo-ubuntu2004-11-8-local_11.8.0-520.61.05-1_amd64.deb \
+    && cp /var/cuda-repo-ubuntu2004-11-8-local/cuda-*-keyring.gpg /usr/share/keyrings/ \
+    && apt-get update \
+    && apt-get -y install cuda
+
 # Install any dependencies
-#RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -e .
 RUN pip install -e ".[train]"
-RUN pip install flash-attn
+RUN pip install flash-attn --no-build-isolation
