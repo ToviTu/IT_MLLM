@@ -2,6 +2,10 @@
 *set_secretes.sh
 wandb/
 
+# some sh files
+*set_environ_var.sh
+*run_interactive_pod.sh
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
