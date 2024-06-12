@@ -7,7 +7,7 @@ from transformers import BitsAndBytesConfig
 from transformers import pipeline
 from transformers import LlavaForConditionalGeneration
 from transformers import AutoProcessor, AutoModelForCausalLM, AutoTokenizer
-from open_flamingo import create_model_and_transforms
+#from open_flamingo import create_model_and_transforms
 from transformers import Blip2Processor, Blip2ForConditionalGeneration
 from huggingface_hub import hf_hub_download
 from transformers import AutoTokenizer, LlamaForCausalLM
@@ -15,81 +15,81 @@ import subprocess
 
 HF_TOKEN = "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"
 
-class OFlamingo(nn.Module):
+# class OFlamingo(nn.Module):
 
-    '''
-    A wrapper for the OpenFlamingo Model; This class currently does not work 
-    due to the recent update of HuggingFace; Downgrading transformers to 4.28.1
-    solves the problem; However, Llava requires transformers>=4.35.1
-    '''
+#     '''
+#     A wrapper for the OpenFlamingo Model; This class currently does not work 
+#     due to the recent update of HuggingFace; Downgrading transformers to 4.28.1
+#     solves the problem; However, Llava requires transformers>=4.35.1
+#     '''
 
-    def __init__(self, cache_dir="/scratch/t.tovi/models/"):
-        super().__init__()
-        model_id = "openflamingo/OpenFlamingo-9B-vitl-mpt7b"
-        cache_dir = cache_dir if cache_dir[-1] == '/' else cache_dir + "/"
+#     def __init__(self, cache_dir="/scratch/t.tovi/models/"):
+#         super().__init__()
+#         model_id = "openflamingo/OpenFlamingo-9B-vitl-mpt7b"
+#         cache_dir = cache_dir if cache_dir[-1] == '/' else cache_dir + "/"
 
-        # Default to gpu
-        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+#         # Default to gpu
+#         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-        # Initialize
-        self.text_model, self.vision_model, self.processor = create_model_and_transforms(
-            clip_vision_encoder_path="ViT-L-14",
-            clip_vision_encoder_pretrained="openai",
-            lang_encoder_path="mosaicml/mpt-7b",
-            tokenizer_path="anas-awadalla/mpt-7b",
-            cross_attn_every_n_layers=4,
-        )
+#         # Initialize
+#         self.text_model, self.vision_model, self.processor = create_model_and_transforms(
+#             clip_vision_encoder_path="ViT-L-14",
+#             clip_vision_encoder_pretrained="openai",
+#             lang_encoder_path="mosaicml/mpt-7b",
+#             tokenizer_path="anas-awadalla/mpt-7b",
+#             cross_attn_every_n_layers=4,
+#         )
 
-        # Load pretrained weights
-        checkpoint_path = hf_hub_download(
-            model_id, 
-            "checkpoint.pt",
-            local_dir=cache_dir+model_id,
-            cache_dir=cache_dir+model_id,
-            local_dir_use_symlinks=False,
-            token=HF_TOKEN
-        )
-        self.text_model.load_state_dict(torch.load(checkpoint_path), strict=False)
+#         # Load pretrained weights
+#         checkpoint_path = hf_hub_download(
+#             model_id, 
+#             "checkpoint.pt",
+#             local_dir=cache_dir+model_id,
+#             cache_dir=cache_dir+model_id,
+#             local_dir_use_symlinks=False,
+#             token=HF_TOKEN
+#         )
+#         self.text_model.load_state_dict(torch.load(checkpoint_path), strict=False)
 
-        self.text_model.to(self.device)
+#         self.text_model.to(self.device)
         
 
-    def preprocess(self, text, images):
-        if type(images) != "<class 'list'>":
-            images = [images]
+#     def preprocess(self, text, images):
+#         if type(images) != "<class 'list'>":
+#             images = [images]
 
-        # Prepare images
-        vision_x = [self.vision_model(img).unsqueeze(0) for img in images]
-        vision_x = torch.cat(vision_x, dim=0)
-        vision_x = vision_x.unsqueeze(1).unsqueeze(0).to(self.device)
+#         # Prepare images
+#         vision_x = [self.vision_model(img).unsqueeze(0) for img in images]
+#         vision_x = torch.cat(vision_x, dim=0)
+#         vision_x = vision_x.unsqueeze(1).unsqueeze(0).to(self.device)
 
-        # Prepare texts
-        self.processor.padding_side = "left" 
-        lang_x = self.processor(
-            [text],
-            return_tensors="pt",
-        ).to(self.device)
+#         # Prepare texts
+#         self.processor.padding_side = "left" 
+#         lang_x = self.processor(
+#             [text],
+#             return_tensors="pt",
+#         ).to(self.device)
 
-        return vision_x, lang_x
+#         return vision_x, lang_x
 
-    def forward(self, text, images):
+#     def forward(self, text, images):
 
-        vision_x, lang_x = self.preprocess(text, images)
-        return self.text_model(
-            vision_x=vision_x,
-            lang_x=lang_x["input_ids"],
-            attention_mask=lang_x["attention_mask"]
-        )
+#         vision_x, lang_x = self.preprocess(text, images)
+#         return self.text_model(
+#             vision_x=vision_x,
+#             lang_x=lang_x["input_ids"],
+#             attention_mask=lang_x["attention_mask"]
+#         )
     
-    def generate(self, text, images, **gargs):
+#     def generate(self, text, images, **gargs):
 
-        vision_x, lang_x = self.preprocess(text, images)
-        preds = self.text_model.generate(
-            vision_x=vision_x,
-            lang_x=lang_x["input_ids"],
-            attention_mask=lang_x["attention_mask"],
-            **gargs
-        )
+#         vision_x, lang_x = self.preprocess(text, images)
+#         preds = self.text_model.generate(
+#             vision_x=vision_x,
+#             lang_x=lang_x["input_ids"],
+#             attention_mask=lang_x["attention_mask"],
+#             **gargs
+#         )
 
 class Llava(nn.Module):
 
