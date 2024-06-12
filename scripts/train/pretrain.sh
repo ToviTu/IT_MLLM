@@ -1,7 +1,10 @@
 #!/bin/bash
 
-deepspeed llava/train/train_mem.py \
-    --deepspeed ./scripts/config/zero2.json \
+# Unknown torchrun DDP error
+export MASTER_PORT=61000
+
+deepspeed ${WORKING_DIR}/llava/train/train_mem.py \
+    --deepspeed ${WORKING_DIR}/scripts/config/zero2.json \
     --model_name_or_path meta-llama/Llama-2-7b-hf \
     --version plain \
     --data_path /scratch/t.tovi/dataset/blip_laion_cc_sbu_558k.json \
@@ -32,4 +35,4 @@ deepspeed llava/train/train_mem.py \
     --gradient_checkpointing True \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
-    --report_to wandb
+    --report_to wandb \

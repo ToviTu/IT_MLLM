@@ -1,6 +1,6 @@
 #! /bin/bash
 
-OUTPUT_DIR="/scratch/t.tovi/dataset/"
+OUTPUT_DIR="${STORAGE_DIR}dataset/"
 
 # Download VQAv2 Train Split
 wget -P $OUTPUT_DIR https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Questions_Train_mscoco.zip
@@ -22,5 +22,6 @@ wget -P $OUTPUT_DIR https://s3.amazonaws.com/commensenseqa/train_rand_split.json
 
 # Download LLaVA pretraining dataset
 wget -P $OUTPUT_DIR https://huggingface.co/datasets/liuhaotian/LLaVA-Pretrain/resolve/main/blip_laion_cc_sbu_558k.json
-wget -P $OUTPUT_DIR https://huggingface.co/datasets/liuhaotian/LLaVA-CC3M-Pretrain-595K/resolve/main/images.zip
+#wget -P $OUTPUT_DIR https://huggingface.co/datasets/liuhaotian/LLaVA-CC3M-Pretrain-595K/resolve/main/images.zip
+wget -P $OUTPUT_DIR https://huggingface.co/datasets/liuhaotian/LLaVA-Pretrain/resolve/main/images.zip
 unzip -d ${OUTPUT_DIR}images/ ${OUTPUT_DIR}images.zip
