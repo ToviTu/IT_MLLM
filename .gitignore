@@ -6,6 +6,9 @@ wandb/
 *set_environ_var.sh
 *run_interactive_pod.sh
 
+# ignore the real LLaVA folder from original repo
+LLaVA_real/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
