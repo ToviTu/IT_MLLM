@@ -4,7 +4,6 @@ import os
 import json
 from tqdm import tqdm
 import shortuuid
-import pdb
 
 from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 from llava.conversation import conv_templates, SeparatorStyle
@@ -19,7 +18,7 @@ import math
 
 def split_list(lst, n):
     """Split a list into n (roughly) equal-sized chunks"""
-    chunk_size = math.ceil(len(lst) / n) 
+    chunk_size = math.ceil(len(lst) / n)  
     return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
 
 
@@ -28,50 +27,49 @@ def get_chunk(lst, n, k):
     return chunks[k]
 
 
-# Custom dataset class for CommonsenseQA
-class CommonsenseQADataset(Dataset):
-    def __init__(self, dataframe, tokenizer, model_config):
-        self.dataframe = dataframe
+# Custom dataset class for ARC
+class ARCDataset(Dataset):
+    def __init__(self, json_file, tokenizer, model_config):
+        with open(json_file, 'r') as f:
+            self.data = [json.loads(line) for line in f]
         self.tokenizer = tokenizer
         self.model_config = model_config
 
     def __getitem__(self, index):
-        row = self.dataframe.iloc[index]
-        question = row["question"]
-        choices = row["choices"]
-        labels = choices["label"]
-        options = choices["text"]
-        options = list(options)  
-        labels = list(labels)
+        row = self.data[index]
+        question = row["question"]["stem"]
+        choices = row["question"]["choices"]
+        labels = [choice["label"] for choice in choices]
+        options = [choice["text"] for choice in choices]
 
         options_with_labels = [f"{label}. {option}" for label, option in zip(labels, options)]
         
-        prompt = f"Question: {question}\nOptions: {', '.join(options_with_labels)}\n Answer with the option's letter from the given choices directly."
+        prompt = f"Question: {question}\nOptions: {', '.join(options_with_labels)}\nAnswer with the option's letter from the given choices directly."
 
         conv = conv_templates[args.conv_mode].copy()
         conv.append_message(conv.roles[0], prompt)
         conv.append_message(conv.roles[1], None)
-        prompt = conv.get_prompt()
-        print("prompt_final: ", prompt)
+        final_prompt = conv.get_prompt()
+        print("prompt_final: ", final_prompt)
 
-        input_ids = self.tokenizer(prompt, return_tensors='pt').input_ids
+        input_ids = self.tokenizer(final_prompt, return_tensors='pt').input_ids
 
-        return input_ids, prompt, row["id"]
+        return input_ids, final_prompt, row["id"]
 
     def __len__(self):
-        return len(self.dataframe)
+        return len(self.data)
 
 
 def collate_fn(batch):
-    input_ids, options, ids = zip(*batch)
+    input_ids, prompts, ids = zip(*batch)
     input_ids = torch.cat(input_ids, dim=0)
-    return input_ids, options, ids
+    return input_ids, prompts, ids
 
 
 # DataLoader
-def create_data_loader(dataframe, tokenizer, model_config, batch_size=1, num_workers=4):
+def create_data_loader(json_file, tokenizer, model_config, batch_size=1, num_workers=4):
     assert batch_size == 1, "batch_size must be 1"
-    dataset = CommonsenseQADataset(dataframe, tokenizer, model_config)
+    dataset = ARCDataset(json_file, tokenizer, model_config)
     data_loader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, shuffle=False, collate_fn=collate_fn)
     return data_loader
 
@@ -83,8 +81,7 @@ def eval_model(args):
     model_name = get_model_name_from_path(model_path)
     tokenizer, model, _, context_len = load_pretrained_model(model_path, args.model_base, model_name)
 
-    dataframe = pd.read_parquet(os.path.expanduser(args.question_file))
-    dataframe = get_chunk(dataframe, args.num_chunks, args.chunk_idx)
+    json_file = os.path.expanduser(args.question_file)
     answers_file = os.path.expanduser(args.answers_file)
     
     answers_dir = os.path.dirname(answers_file)
@@ -93,9 +90,9 @@ def eval_model(args):
         
     ans_file = open(answers_file, "w")
 
-    data_loader = create_data_loader(dataframe, tokenizer, model.config)
+    data_loader = create_data_loader(json_file, tokenizer, model.config)
 
-    for input_ids, prompt, ids in tqdm(data_loader, total=len(dataframe)):
+    for input_ids, prompt, ids in tqdm(data_loader, total=len(data_loader.dataset)):
         qid = ids[0]
 
         input_ids = input_ids.to(device='cuda', non_blocking=True)
@@ -125,8 +122,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-path", type=str, default="liuhaotian/llava-v1.5-7b")
     parser.add_argument("--model-base", type=str, default=None)
-    parser.add_argument("--question-file", type=str, default="/scratch/peterni/IT_MLLM/datasets/commonsense_qa/test-00000-of-00001.parquet")
-    parser.add_argument("--answers-file", type=str, default="/scratch/peterni/IT_MLLM/llava/eval/commonsense_qa_answer.jsonl")
+    parser.add_argument("--question-file", type=str, default="/scratch/peterni/IT_MLLM/datasets/ARC-V1-Feb2018-2/ARC-Easy/ARC-Easy-Test.jsonl")
+    parser.add_argument("--answers-file", type=str, default="/scratch/peterni/IT_MLLM/llava/eval/arc_answers.jsonl")
     parser.add_argument("--conv-mode", type=str, default="llava_v1")
     parser.add_argument("--num-chunks", type=int, default=1)
     parser.add_argument("--chunk-idx", type=int, default=0)
