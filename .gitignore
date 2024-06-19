@@ -6,6 +6,15 @@ wandb/
 *set_environ_var.sh
 *run_interactive_pod.sh
 
+# Ignore environment variable setup script
+sh/set_environ_var.sh
+
+# Ignore secrets setup script
+sh/set_secrets.sh
+
+# Ignore interactive pod script
+apptainer/run_interactive_pod.sh
+
 # ignore the real LLaVA folder from original repo
 LLaVA_real/
 
