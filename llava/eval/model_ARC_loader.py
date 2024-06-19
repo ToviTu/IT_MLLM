@@ -14,7 +14,13 @@ from torch.utils.data import Dataset, DataLoader
 
 import pandas as pd
 import math
+import os
+import sys
 
+storage_dir = os.environ.get('STORAGE_DIR', '/default/storage/path')
+working_dir = os.environ.get('WORKING_DIR', '/default/working/path')
+question_file_path = os.path.join(storage_dir, "IT_MLLM/datasets/ARC-V1-Feb2018-2/ARC-Easy/ARC-Easy-Test.jsonl")
+answer_file_path = os.path.join(storage_dir, "IT_MLLM/llava/eval/arc_answers.jsonl")
 
 def split_list(lst, n):
     """Split a list into n (roughly) equal-sized chunks"""
@@ -122,8 +128,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-path", type=str, default="liuhaotian/llava-v1.5-7b")
     parser.add_argument("--model-base", type=str, default=None)
-    parser.add_argument("--question-file", type=str, default="/scratch/peterni/IT_MLLM/datasets/ARC-V1-Feb2018-2/ARC-Easy/ARC-Easy-Test.jsonl")
-    parser.add_argument("--answers-file", type=str, default="/scratch/peterni/IT_MLLM/llava/eval/arc_answers.jsonl")
+    parser.add_argument("--question-file", type=str, default=question_file_path)
+    parser.add_argument("--answers-file", type=str, default=answer_file_path)
     parser.add_argument("--conv-mode", type=str, default="llava_v1")
     parser.add_argument("--num-chunks", type=int, default=1)
     parser.add_argument("--chunk-idx", type=int, default=0)
