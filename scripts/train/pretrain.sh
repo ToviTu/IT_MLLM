@@ -7,8 +7,8 @@ deepspeed ${WORKING_DIR}/llava/train/train_mem.py \
     --deepspeed ${WORKING_DIR}/scripts/config/zero2.json \
     --model_name_or_path meta-llama/Llama-2-7b-hf \
     --version plain \
-    --data_path /scratch/t.tovi/dataset/blip_laion_cc_sbu_558k.json \
-    --image_folder /scratch/t.tovi/dataset/images \
+    --data_path ${HF_DATASETS_CACHE}blip_laion_cc_sbu_558k.json \
+    --image_folder ${HF_DATASETS_CACHE}dataset/images \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \
     --tune_mm_mlp_adapter True \

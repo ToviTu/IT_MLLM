@@ -1,6 +1,6 @@
 #! /bin/bash
 
-export STORAGE_DIR="/scratch/t.tovi/"
+export STORAGE_DIR="/scratch/vision_share/"
 export WORKING_DIR="/home/research/jianhong.t/Instruction-tuned-Flamingo-MLLM"
 
 export HF_DATASETS_CACHE="${STORAGE_DIR}datasets/"
