@@ -17,7 +17,7 @@ import pandas as pd
 import math
 storage_dir = os.environ.get('STORAGE_DIR', '/default/storage/path')
 working_dir = os.environ.get('WORKING_DIR', '/default/working/path')
-question_file_path = os.path.join(storage_dir, "IT_MLLM/datasets/commonsense_qa/test-00000-of-00001.parquet")
+question_file_path = os.path.join(storage_dir, "IT_MLLM/datasets/commonsenseqa/test_rand_split.jsonl")
 answer_file_path = os.path.join(storage_dir, "IT_MLLM/llava/eval/commonsense_qa_answer.jsonl")
 
 def split_list(lst, n):
@@ -33,19 +33,18 @@ def get_chunk(lst, n, k):
 
 # Custom dataset class for CommonsenseQA
 class CommonsenseQADataset(Dataset):
-    def __init__(self, dataframe, tokenizer, model_config):
-        self.dataframe = dataframe
+    def __init__(self, jsonl_file, tokenizer, model_config):
+        with open(jsonl_file, 'r') as f:
+            self.data = [json.loads(line) for line in f]
         self.tokenizer = tokenizer
         self.model_config = model_config
 
     def __getitem__(self, index):
-        row = self.dataframe.iloc[index]
-        question = row["question"]
-        choices = row["choices"]
-        labels = choices["label"]
-        options = choices["text"]
-        options = list(options)  
-        labels = list(labels)
+        row = self.data[index]
+        question = row["question"]["stem"]
+        choices = row["question"]["choices"]
+        labels = [choice["label"] for choice in choices]
+        options = [choice["text"] for choice in choices]
 
         options_with_labels = [f"{label}. {option}" for label, option in zip(labels, options)]
         
@@ -62,7 +61,7 @@ class CommonsenseQADataset(Dataset):
         return input_ids, prompt, row["id"]
 
     def __len__(self):
-        return len(self.dataframe)
+        return len(self.data)
 
 
 def collate_fn(batch):
@@ -86,8 +85,7 @@ def eval_model(args):
     model_name = get_model_name_from_path(model_path)
     tokenizer, model, _, context_len = load_pretrained_model(model_path, args.model_base, model_name)
 
-    dataframe = pd.read_parquet(os.path.expanduser(args.question_file))
-    dataframe = get_chunk(dataframe, args.num_chunks, args.chunk_idx)
+    jsonl_file = os.path.expanduser(args.question_file)
     answers_file = os.path.expanduser(args.answers_file)
     
     answers_dir = os.path.dirname(answers_file)
@@ -96,9 +94,9 @@ def eval_model(args):
         
     ans_file = open(answers_file, "w")
 
-    data_loader = create_data_loader(dataframe, tokenizer, model.config)
+    data_loader = create_data_loader(jsonl_file, tokenizer, model.config)
 
-    for input_ids, prompt, ids in tqdm(data_loader, total=len(dataframe)):
+    for input_ids, prompt, ids in tqdm(data_loader, total=len(data_loader.dataset)):
         qid = ids[0]
 
         input_ids = input_ids.to(device='cuda', non_blocking=True)
