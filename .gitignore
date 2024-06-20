@@ -20,6 +20,7 @@ datasets/ARC-V1-Feb2018-2
 datasets/commonsenseqa
 datasets/cosmosqa
 datasets/strategyqa
+datasets/datasets.sh
 
 # ignore the real LLaVA folder from original repo
 LLaVA_real/

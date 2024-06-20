@@ -1,3 +1,1 @@
-datasets/* filter=lfs diff=lfs merge=lfs -text
-datasets/ARC-V1-Feb2018-2/ARC_Corpus.txt filter=lfs diff=lfs merge=lfs -text
-datasets/cosmosqa/* filter=lfs diff=lfs merge=lfs -text
+
