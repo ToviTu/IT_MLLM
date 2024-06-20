@@ -1,5 +1,4 @@
 #!/bin/bash
-
 set -e
 
 WORKING_DIR=${WORKING_DIR:-/default/working/path}
