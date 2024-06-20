@@ -13,7 +13,7 @@ from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
 from llava.mm_utils import (
     process_images,
-    tokenizer_image_token,
+    tokenizer_image_token,3
     get_model_name_from_path,
 )
 
@@ -48,6 +48,7 @@ def load_images(image_files):
 
 
 def eval_model(args):
+    print("using Peter's run_llava2.py")
     # Model
     disable_torch_init()
 
@@ -67,7 +68,10 @@ def eval_model(args):
         if model.config.mm_use_im_start_end:
             qs = image_token_se + "\n" + qs
         else:
-            qs = DEFAULT_IMAGE_TOKEN + "\n" + qs
+            if args.image_file is not None:
+                qs = DEFAULT_IMAGE_TOKEN + "\n" + qs
+            else:
+                qs = qs
 
     if "llama-2" in model_name.lower():
         conv_mode = "llava_llama_2"
@@ -96,14 +100,18 @@ def eval_model(args):
     conv.append_message(conv.roles[1], None)
     prompt = conv.get_prompt()
 
-    image_files = image_parser(args)
-    images = load_images(image_files)
-    image_sizes = [x.size for x in images]
-    images_tensor = process_images(
-        images,
-        image_processor,
-        model.config
-    ).to(model.device, dtype=torch.float16)
+    if args.image_file is not None:
+        image_files = image_parser(args)
+        images = load_images(image_files)
+        image_sizes = [x.size for x in images]
+        images_tensor = process_images(
+                images,
+                image_processor,
+                model.config
+            ).to(model.device, dtype=torch.float16)
+    else:
+        images_tensor = None
+        image_sizes = None
 
     input_ids = (
         tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors="pt")
@@ -114,7 +122,7 @@ def eval_model(args):
     with torch.inference_mode():
         output_ids = model.generate(
             input_ids,
-            images=images_tensor,
+            images=None if images_tensor is None else images_tensor,
             image_sizes=image_sizes,
             do_sample=True if args.temperature > 0 else False,
             temperature=args.temperature,
@@ -126,7 +134,9 @@ def eval_model(args):
 
     outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
     print(outputs)
-
+    
+    print("testing")
+    return outputs
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

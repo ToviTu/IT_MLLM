@@ -2,6 +2,28 @@
 *set_secretes.sh
 wandb/
 
+# some sh files
+*set_environ_var.sh
+*run_interactive_pod.sh
+
+# Ignore environment variable setup script
+sh/set_environ_var.sh
+
+# Ignore secrets setup script
+sh/set_secrets.sh
+
+# Ignore interactive pod script
+apptainer/run_interactive_pod.sh
+
+# ignore the datasets
+datasets/ARC-V1-Feb2018-2
+datasets/commonsenseqa
+datasets/cosmosqa
+datasets/strategyqa
+
+# ignore the real LLaVA folder from original repo
+LLaVA_real/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

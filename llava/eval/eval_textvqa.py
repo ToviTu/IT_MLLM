@@ -3,7 +3,7 @@ import argparse
 import json
 import re
 
-from llava.eval.m4c_evaluator import TextVQAAccuracyEvaluator
+from llava_peter.eval.m4c_evaluator import TextVQAAccuracyEvaluator
 
 
 def get_args():
