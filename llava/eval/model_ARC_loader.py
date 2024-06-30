@@ -124,6 +124,8 @@ def eval_model(args):
                                    "metadata": {}}) + "\n")
     ans_file.close()
 
+
+    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-path", type=str, default="liuhaotian/llava-v1.5-7b")
