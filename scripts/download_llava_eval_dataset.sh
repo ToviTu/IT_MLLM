@@ -144,19 +144,19 @@ wget -P $EVAL_DIR/pope https://github.com/AoiDragon/POPE/tree/e3e39262c85a6a83f2
 # The benchmark dataset is collected by Xiamen University for academic research only. You can email yongdongluo@stu.xmu.edu.cn to obtain the dataset, according to the following requirement.
 
 # Download MMBench and MMBench-CN
-wget -P $EVAL_DIR/mmbench https://download.openmmlab.com/mmclassification/datasets/mmbench/mmbench_dev_20230712.tsv -O "$EVAL_DIR/mmbench/mmbench_dev_20230712.tsv"
-wget -P $EVAL_DIR/mmbench https://download.openmmlab.com/mmclassification/datasets/mmbench/mmbench_dev_cn_20231003.tsv -O "$EVAL_DIR/mmbench/mmbench_dev_cn_20231003.tsv"
+# wget -P $EVAL_DIR/mmbench https://download.openmmlab.com/mmclassification/datasets/mmbench/mmbench_dev_20230712.tsv -O "$EVAL_DIR/mmbench/mmbench_dev_20230712.tsv"
+# wget -P $EVAL_DIR/mmbench https://download.openmmlab.com/mmclassification/datasets/mmbench/mmbench_dev_cn_20231003.tsv -O "$EVAL_DIR/mmbench/mmbench_dev_cn_20231003.tsv"
 
 
 # Download SEED-Bench
 # TBD: 
 
 # Download LLaVA-Bench-in-the-Wild
-git clone git@hf.co:datasets/liuhaotian/llava-bench-in-the-wild
-cp -r llava-bench-in-the-wild/images $EVAL_DIR/llava-bench-in-the-wild
-rm -rf llava-bench-in-the-wild
+# git clone git@hf.co:datasets/liuhaotian/llava-bench-in-the-wild
+# cp -r llava-bench-in-the-wild/images $EVAL_DIR/llava-bench-in-the-wild
+# rm -rf llava-bench-in-the-wild
 
 
 # Down MM-Vet
-wget -P $EVAL_DIR/mm-vet https://github.com/yuweihao/MM-Vet/releases/download/v1/mm-vet.zip -O "$EVAL_DIR/mm-vet/mm-vet.zip"
-unzip -d $EVAL_DIR/mm-vet ${EVAL_DIR}/mm-vet/mm-vet.zip
+# wget -P $EVAL_DIR/mm-vet https://github.com/yuweihao/MM-Vet/releases/download/v1/mm-vet.zip -O "$EVAL_DIR/mm-vet/mm-vet.zip"
+# unzip -d $EVAL_DIR/mm-vet ${EVAL_DIR}/mm-vet/mm-vet.zip
