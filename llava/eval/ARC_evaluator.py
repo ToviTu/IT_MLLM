@@ -342,7 +342,7 @@ class ARCAccuracyEvaluator:
     
     def regenerate_answers_pattern(self, incorrect_answers):
         regenerated_answers = []
-        pattern = re.compile(r'\b([ABCD])\.')
+        pattern = re.compile(r'\b([ABCD1234])\.')
 
         for entry in incorrect_answers:
             text = entry["text"]
