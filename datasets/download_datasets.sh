@@ -1,10 +1,9 @@
 #!/bin/bash
 set -e
 
-WORKING_DIR=${WORKING_DIR:-/default/working/path}
-echo "Working directory: $WORKING_DIR"
+DEST_DIR="$STORAGE_DIR/datasets/"
 
-DEST_DIR="$WORKING_DIR/datasets/"
+echo "Saving files to $DEST_DIR"
 
 mkdir -p "$DEST_DIR"
 
@@ -22,7 +21,7 @@ rm ARC-V1-Feb2018.zip
 echo "ARC dataset downloaded and unzipped successfully."
 
 # CommonsenseQA dataset
-COMMONSENSEQA_DIR="$WORKING_DIR/datasets/commonsenseqa"
+COMMONSENSEQA_DIR="$DEST_DIR/commonsenseqa"
 
 mkdir -p "$COMMONSENSEQA_DIR"
 
@@ -35,7 +34,7 @@ wget --no-check-certificate https://s3.amazonaws.com/commensenseqa/dev_rand_spli
 echo "CommonsenseQA dataset downloaded successfully."
 
 # StrategyQA dataset
-STRATEGYQA_DIR="$WORKING_DIR/datasets/strategyqa"
+STRATEGYQA_DIR="$DEST_DIR/strategyqa"
 
 mkdir -p "$STRATEGYQA_DIR"
 
@@ -52,7 +51,7 @@ rm strategyqa_dataset.zip
 echo "StrategyQA dataset downloaded and unzipped successfully."
 
 # CosmosQA dataset
-COSMOSQA_DIR="$WORKING_DIR/datasets/cosmosqa"
+COSMOSQA_DIR="$DEST_DIR/cosmosqa"
 
 mkdir -p "$COSMOSQA_DIR"
 

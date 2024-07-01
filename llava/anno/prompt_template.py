@@ -1,14 +1,29 @@
+import random
+
 # Prompt templates for Vicuna
 vicuna_instruct = "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions.\n\n"
 vicuna_qa = lambda q, a: f"{vicuna_instruct}USER: {q}\nASSISTANT: {a}"
 vicuna_cqa = lambda c, q, a: f"{vicuna_instruct}{c}\nUSER: {q}\nASSISTANT: {a}"
 
+# Multiple choice template
+
+mc_prompt = [
+    "Choose the correct answer from the following options:",
+    "Only one of the following options is correct. Choose the correct one:",
+    "Which of the following is the correct answer?",
+    "Choose the correct option from the following:"
+    "Select the most appropriate answer from the following options:",
+]
+
 # Prompt templates for LLaVA
 
-llava_qa = lambda q, a: f"User: {q}\nAssistant: {a}"
-llava_cqa = lambda c, q, a: f"Context: {c}\nUser: {q}\nAssistant: {a}"
-llava_mc = lambda c, q, a: f"User: {q} Choose from below.\nChoices: A) {c[0]}\n B) {c[1]}\n C) {c[2]}\n D) {c[3]}\nAssistant: {a}"
+llava_cqa = lambda c, q, a: (f"{c}\n" if c else "") + f"User: {q}\nAssistant: {a}"
 llava_vqa = lambda c, q, a: f"<image>{c}\nUser: {q}\nAssistant:{a}"
+llava_cmc = lambda c, mc, q, a: llava_cqa(
+    c,
+    q+" "+random.choice(mc_prompt)+"\n".join([each for each in mc]),
+    a
+)
 
 # Prompt templates for Other models
 
