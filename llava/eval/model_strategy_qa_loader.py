@@ -46,7 +46,7 @@ class StrategyQADataset(Dataset):
         qid = row["qid"]
 
         # Constructing the prompt
-        prompt = f"Question: {question}\n Answer with 'true' or 'false'."
+        prompt = f"{question}\n Answer with ""true"" or ""false""."
 
         conv = conv_templates[args.conv_mode].copy()
         conv.append_message(conv.roles[0], prompt)

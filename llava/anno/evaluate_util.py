@@ -1,76 +1,137 @@
 from datasets import load_dataset, load_metric
-from datasets import Dataset as HDataset
-from torch.utils.data import Dataset, DataLoader
+from llava.anno.prompt_template import llava_cqa, llava_cmc
 import json
 import numpy as np
 import csv
-import pandas as pd
 import string
 import re
+import tqdm
+
 
 DATA_DIR = "/scratch/t.tovi/dataset/"
 
-class SQuAD:
+class DatasetFactory:
 
-    def __init__(self):
-        data = load_dataset("squad")
-        self.train_set = data['train']
-        self.val_set = data['validation']
-        self.metric = load_metric("squad")
+    def __init__(self, train_set, val_set):
+        self.training = True
+        self.train_set = train_set
+        self.val_set = val_set
+
+        assert "question" in self.train_set[0] and "answer" in self.train_set[0], "Expect question and answer columns in the dataset"
+        self.has_context = "context" in self.train_set[0]
+
+    def format_input(self, context="", question="", choices="", answer="", template=llava_cqa, prefix='', suffix=''):
+        '''
+        Format the input for the model
+        '''
+        if choices:
+            formatted_input = prefix + llava_cmc(context, choices, question, answer) + suffix
+        else:
+            formatted_input = prefix + template(context, question, answer) + suffix
+        return formatted_input
     
-    def format_input_with_cot_prompt(self, eos_token, instruction, cot_prompts, cqa_template, cqa):
+    def add_rationale(self, rationale):
+        self.rationale = rationale
 
-        # Prepend instruction
-        formatted_input = instruction + '\n'
+    def format_input_with_rationale(self, context="", question="", choices="", answer="", rationale="", template=llava_cqa, prefix='', suffix=''):
+        if choices:
+            return prefix + template(context, choices, question, answer + '\n' + rationale) + suffix
+        else:
+            return prefix + template(context, question, answer + '\n' + rationale) + suffix
+    
+    def format_input_with_cot_example(self, eos_token, instruction, cot_prompts, cqa_template, cqa):
 
         # Randomly select a cot exmaple
         cot_example = cot_prompts[np.random.choice(len(cot_prompts))]
-        cot_template = cqa_template(cot_example['Context'], cot_example['Question'], cot_example['Answer'])
-        formatted_input += cot_template+'\n'
-
-        # Append the gpt rationale
-        formatted_input += "Rationale: " + cot_example['Rationale'] + eos_token
+        cot_example = self.format_input(
+                context = cot_example['Context'],
+                question = cot_example['Question'],
+                answer = cot_example['Answer'],
+                template = cqa_template, 
+                prefix = instruction + '\n', 
+                suffix = '\n' + "Rationale: " + cot_example['Rationale'] + eos_token
+            )
 
         # Apply template to the question
-        inputs = cqa_template(cqa['context'], cqa['question'], cqa['answers']['text'][0])
-        formatted_input += instruction + '\n' + inputs + '\n'
+        question = self.format_input(
+                context = cqa['context'],
+                question = cqa['question'],
+                answer = cqa['answer'], 
+                template = cqa_template,
+                prefix = instruction + '\n',
+                suffix = '\n' + "Rationale:" 
+            )
 
-        # Add Rationale prompt
-        formatted_input += "Rationale:"
-
-        return formatted_input
+        return cot_example + question
     
-    def get_train_set(self, eos_token, instruction, template, cot_prompts, batchsize=32):
+    def process(self, split='train', mode='train', template=llava_cqa, eos_token='', instruction='', cot=False, cot_prompts=None):
         '''
         Select only context and question columns
         '''
-        preprocessed_dataset = self.train_set.map(
-            lambda example: 
-                {
-                    'finputs': self.format_input_with_cot_prompt(eos_token, instruction, cot_prompts, template, example),
-                }, 
-                remove_columns=[c for c in self.train_set.column_names if c != 'id']
-        )
+        data = self.train_set if split == 'train' else self.val_set
+        if cot:
+            assert mode=='train', "Only in training mode"
+            assert cot_prompts is not None, "CoT prompts are required"
+            mapping_func = lambda example: {
+                    'id': example['id'],
+                    'finputs': self.format_input_with_cot_example(eos_token, instruction, cot_prompts, template, example),
+                }
+        else:
+            mapping_func = lambda example: {
+                    'id': example['id'],
+                    'finputs': self.format_input(
+                        context=example['context'] if self.has_context else "", 
+                        question=example['question'], 
+                        answer=example['answer'] if mode=='train' else "", 
+                        template=template,
+                        prefix=instruction + '\n' if instruction else "",
+                    ),
+                }
+            
+        return map(mapping_func, data)
         
-        # Convert encoded batched examples into tensors
-        preprocessed_dataset.set_format('torch')
-        return preprocessed_dataset
-    
-    def get_eval_set(self, cqa_template):
-        '''
-        Select only context and question columns
-        '''
-        preprocessed_dataset = self.val_set.map(
-            lambda example: 
-                {
-                    'finputs': cqa_template(example['context'], example['question'], ""),
-                }, 
-                remove_columns=[c for c in self.train_set.column_names if c != 'id']
-        )
+    def process_with_rationale(self, rationale=None, template=llava_cqa, instruction=''):
+        mapping_func = lambda example, rationale: {
+                'id': example['id'],
+                'finputs': self.format_input_with_rationale(
+                    context=example['context'] if self.has_context else "", 
+                    question=example['question'], 
+                    answer=rationale + "\nTherefore, the answer is " + example['answer'], 
+                    template=template,
+                    prefix=instruction + '\n' if instruction else "",
+                ),
+            }
+
+        data = []
+        for example in tqdm.tqdm(self.train_set):
+            if example['id'] not in rationale:
+                continue
+            r = rationale[example['id']]
+            data.append(mapping_func(example, r))
+        return data
+
+
+class SQuAD(DatasetFactory):
+
+    def __init__(self):
+        data = load_dataset("squad")
+
+        train_set = data['train']
+        val_set = data['validation']
+
+        preprocess = lambda instance: {
+            'id': instance['id'],
+            'context': instance['context'],
+            'question': instance['question'],
+            'answer': instance['answers']['text'][0],
+        }
         
-        # Convert encoded batched examples into tensors
-        preprocessed_dataset.set_format('torch')
-        return preprocessed_dataset
+        train_set = list(map(preprocess, train_set))
+        val_set = list(map(preprocess, val_set))
+
+        super().__init__(train_set, val_set)
+
+        self.metric = load_metric("squad")
     
     def normalize_answer(self, s):
         """Lower text and remove punctuation, articles and extra whitespace."""
@@ -117,49 +178,21 @@ class SQuAD:
             ground_truth.append({'id':id, 'answers': all_answers[id]})
         return extracted_answers, ground_truth, self.metric.compute(predictions=extracted_answers, references=ground_truth)
 
-class StrategyQA:
+class StrategyQA(DatasetFactory):
 
     def __init__(self):
-        with open("/scratch/t.tovi/dataset/strategyqa_train.json", 'r') as f:
+        with open(f"{DATA_DIR}strategyqa_train.json", 'r') as f:
             data = json.load(f)
-        self.train_set = data
+        train_set = data
 
-    def format_input_with_cot_prompt(self, eos_token, instruction, cot_prompts, cqa_template, cqa):
+        preprocess = lambda instance: {
+            'id': instance['qid'],
+            'question': instance['question'],
+            'answer': str(instance['answer']),
+        }
+        train_set = list(map(preprocess, train_set))
+        super().__init__(train_set, [])
 
-        # Prepend instruction
-        formatted_input = instruction + '\n'
-
-        # Randomly select a cot exmaple
-        cot_example = cot_prompts[np.random.choice(len(cot_prompts))]
-        cot_template = cqa_template(cot_example['facts'], cot_example['question'], cot_example['answer'])
-        formatted_input += cot_template+'\n'
-
-        # Append the gpt rationale
-        formatted_input += "Rationale: " + cot_example['rationale'] + eos_token
-
-        # Apply template to the question
-        facts = " ".join(cqa['facts'])
-        inputs = cqa_template(facts, cqa['question'], cqa['answer'])
-        formatted_input += instruction +  '\n' + inputs+'\n'
-
-        # Add Rationale prompt
-        formatted_input += "Rationale:"
-
-        return formatted_input
-
-    def get_train_set(self, instruction, eos_token, template, cot_prompts, batchsize=32):
-        '''
-        Select only context and question columns
-        '''
-        preprocessed_dataset = []
-        for batch in self.train_set:
-            fbatch = {}
-            fbatch['id'] = batch['qid']
-
-            fbatch['finputs'] = self.format_input_with_cot_prompt(eos_token, instruction, cot_prompts, template, batch)
-            preprocessed_dataset.append(fbatch)
-
-        return preprocessed_dataset
 
     def extract_answer(self, model_answers):
         '''
@@ -185,110 +218,13 @@ class StrategyQA:
             ground_truth.append({'id':id, 'answers': all_answers[id]})
         return extracted_answers, ground_truth
 
-class GSM8K:
-
-    def __init__(self):
-        data = load_dataset('gsm8k', 'main')
-        self.train_set = data['train']
-        self.val_set = data['test']
-
-        # Reserve 10% of the training set for few-shot prompting
-        idx = np.random.choice(range(len(self.train_set)),  int(0.1 * len(self.train_set)))
-        self.prompt_set = self.train_set[idx]
-        train_idx = list(set(range(len(self.train_set))) - set(idx))
-        self.train_set = self.train_set[train_idx]
-
-    def get_eval_set(self, processor, template, batchsize=32):
-
-        # Select only context and question columns
-        preprocessed_dataset = self.val_set.map(
-            lambda example: 
-                {
-                    'finputs': template(example['question']),
-                }, 
-                remove_columns=self.val_set.column_names
-        )
-
-        # Get max length
-        max_len = 256
-
-        # Tokenize the inputs
-        def tokenize_function(examples):
-            encoded = processor(
-                    examples['finputs'],
-                    padding='max_length',
-                    max_length=max_len,
-                )
-
-            return {k: encoded[k] for k in encoded.keys() if k != "pixel_values"} 
-                    
-        preprocessed_dataset = preprocessed_dataset.map(
-            tokenize_function, 
-            remove_columns=[c for c in preprocessed_dataset.column_names if c != 'id'],
-            batched = True,
-            batch_size = batchsize
-        )
-        
-        # Convert encoded batched examples into tensors
-        preprocessed_dataset.set_format('torch')
-        return preprocessed_dataset
-
-class MMLU:
-    '''
-    Probably dont want to use it since its difficulty
-    '''
-    def __init__(self):
-        data = load_dataset('cais/mmlu', "all")
-        self.train_set = data['train']
-        self.val_set = data['test']
-
-        # Reserve 10% of the training set for few-shot prompting
-        idx = np.random.choice(range(len(self.train_set)),  int(0.1 * len(self.train_set)))
-        self.prompt_set = self.train_set[idx]
-        train_idx = list(set(range(len(self.train_set))) - set(idx))
-        self.train_set = self.train_set[train_idx]
-
-    def get_eval_set(self, processor, template, batchsize=32):
-
-        # Select only context and question columns
-        preprocessed_dataset = self.val_set.map(
-            lambda example: 
-                {
-                    'finputs': template(example['question']),
-                }, 
-                remove_columns=self.val_set.column_names
-        )
-
-        # Get max length
-        max_len = 256
-
-        # Tokenize the inputs
-        def tokenize_function(examples):
-            encoded = processor(
-                    examples['finputs'],
-                    padding='max_length',
-                    max_length=max_len,
-                )
-
-            return {k: encoded[k] for k in encoded.keys() if k != "pixel_values"} 
-                    
-        preprocessed_dataset = preprocessed_dataset.map(
-            tokenize_function, 
-            remove_columns=[c for c in preprocessed_dataset.column_names if c != 'id'],
-            batched = True,
-            batch_size = batchsize
-        )
-        
-        # Convert encoded batched examples into tensors
-        preprocessed_dataset.set_format('torch')
-        return preprocessed_dataset
 
 class CommonsenseQA:
 
     def __init__(self):
         # Read raw dataset
         data = []
-        with open("/scratch/t.tovi/datasets/train_rand_split.jsonl", 'r') as file:
+        with open(f"{DATA_DIR}/train_rand_split.jsonl", 'r') as file:
             for line in file:
                 data.append(json.loads(line))
 
@@ -307,131 +243,48 @@ class CommonsenseQA:
 
             fdata.append(fentry)
 
-        self.train_set = fdata
-
-    def format_input_with_cot_prompt(self, eos_token, instruction, cot_prompts, cqa_template, cqa):
-
-        # Prepend instruction
-        formatted_input = instruction + '\n'
-
-        # Randomly select a cot exmaple
-        cot_example = cot_prompts[np.random.choice(len(cot_prompts))]
-        cot_template = cqa_template(cot_example['Context'], cot_example['Question'], cot_example['Answer'])
-        formatted_input += cot_template+'\n'
-
-        # Append the gpt rationale
-        formatted_input += "Rationale: " + cot_example['Rationale'] + eos_token
-
-        # Apply template to the question
-        inputs = cqa_template(cqa['context'], cqa['question'], cqa['answer'])
-        formatted_input += instruction + '\n' + inputs + '\n'
-
-        # Add Rationale prefix
-        formatted_input += "Rationale:"
-
-        return formatted_input
-
-    def get_train_set(self, eos_token, instruction, template, cot_prompts, batchsize=32):
-        '''
-        Select only context and question columns
-        '''
-        preprocessed_dataset = []
-        for batch in self.train_set:
-            fbatch = {}
-            fbatch['id'] = batch['id']
-
-            fbatch['finputs'] = self.format_input_with_cot_prompt(eos_token, instruction, cot_prompts, template, batch)
-            preprocessed_dataset.append(fbatch)
-
-        return preprocessed_dataset
-
-    def extract_answer(self, model_answers):
-        '''
-        Extract the succinct answers from the model generated texts
-        '''
-        pass
+        super().__init__(fdata, [])
 
 class CosmosQA:
 
     def __init__(self):
         # Read raw dataset
         data = []
-        with open("/scratch/t.tovi/datasets/cosmosqa_train.csv", 'r') as f:
+        with open(f"{DATA_DIR}/cosmosqa_train.csv", 'r') as f:
             reader = csv.reader(f)
             next(reader, None)
             for line in reader:
                 id = line[0]
                 context = line[1]
                 question = line[2]
-                choices = f"A {line[3]}\n B {line[4]}\n C {line[5]}\n D {line[6]}\n"
+                choices = [
+                    "A " + line[3],
+                    "B " + line[4],
+                    "C " + line[5],
+                    "D " + line[6]
+                ]
                 mapping = {"0":"A", "1":"B", "2":"C", "3":"D"}
                 answer = mapping[line[-1]]
                 entry = {"id": id, "context": context, "question": question, "choices": choices, "answer": answer}
                 data.append(entry)
 
-        self.train_set = data
-
-    def format_input_with_cot_prompt(self, eos_token, instruction, cot_prompts, cqa_template, cqa):
-
-        # Prepend instruction
-        formatted_input = instruction + '\n'
-
-        # Randomly select a cot exmaple
-        cot_example = cot_prompts[np.random.choice(len(cot_prompts))]
-        cot_template = cqa_template(cot_example['Context'], cot_example['Question'], cot_example['Answer'])
-        formatted_input += cot_template+'\n'
-
-        # Append the gpt rationale
-        formatted_input += "Rationale: " + cot_example['Rationale'] + eos_token
-
-        # Format question prompt
-        question_instruction = "Choose the most appropriate answer from below:\n"
-        question = cqa["question"] + question_instruction + cqa['choices']
-
-        # Apply template to the question
-        inputs = cqa_template(cqa['context'], question, cqa['answer'])
-        formatted_input += instruction + '\n' + inputs + '\n'
-
-        # Add Rationale prefix
-        formatted_input += "Rationale:"
-
-        return formatted_input
-
-    def get_train_set(self, eos_token, instruction, template, cot_prompts, batchsize=32):
-        '''
-        Select only context and question columns
-        '''
-        preprocessed_dataset = []
-        for batch in self.train_set:
-            fbatch = {}
-            fbatch['id'] = batch['id']
-
-            fbatch['finputs'] = self.format_input_with_cot_prompt(eos_token, instruction, cot_prompts, template, batch)
-            preprocessed_dataset.append(fbatch)
-
-        return preprocessed_dataset
-
-    def extract_answer(self, model_answers):
-        '''
-        Extract the succinct answers from the model generated texts
-        '''
-        pass
+        super().__init__(data, [])
 
 class ARC:
 
     def __init__(self):
         # Read raw dataset
         data = []
-        with open("/scratch/t.tovi/dataset/ARC-V1-Feb2018-2/ARC-Challenge/ARC-Challenge-Train.jsonl", 'r') as f:
+        with open(f"{DATA_DIR}/ARC-V1-Feb2018-2/ARC-Challenge/ARC-Challenge-Train.jsonl", 'r') as f:
             for line in f:
                 data.append(json.loads(line))
 
-        with open("/scratch/t.tovi/dataset/ARC-V1-Feb2018-2/ARC-Easy/ARC-Easy-Train.jsonl", 'r') as f:
+        with open(f"{DATA_DIR}/ARC-V1-Feb2018-2/ARC-Easy/ARC-Easy-Train.jsonl", 'r') as f:
             for line in f:
                 data.append(json.loads(line))
         
         # Format choices
-        self.train_set = []
+        train_set = []
         for entry in data:
             fentry = {}
             fentry['id'] = entry['id']
@@ -439,105 +292,6 @@ class ARC:
             choices = [choice['label']+ " " + choice['text'] for choice in entry['question']['choices']]
             fentry['choices'] = "\n".join(choices)
             fentry['answer'] = entry['answerKey']
-            self.train_set.append(fentry)
-
-
-    def format_input_with_cot_prompt(self, eos_token, instruction, cot_prompts, qa_template, cqa):
-
-        # Prepend instruction
-        formatted_input = instruction + '\n'
-
-        # Randomly select a cot exmaple
-        cot_example = cot_prompts[np.random.choice(len(cot_prompts))]
-        cot_template = qa_template(cot_example['Question'], cot_example['Answer'])
-        formatted_input += cot_template+'\n'
-
-        # Append the gpt rationale
-        formatted_input += "Rationale: " + cot_example['Rationale'] + eos_token
-
-        # Format question prompt
-        question_instruction = "Choose the most appropriate answer from below:\n"
-        question = cqa["question"] + question_instruction + cqa['choices']
-
-        # Apply template to the question
-        inputs = qa_template(question, cqa['answer'])
-        formatted_input += instruction + '\n' + inputs + '\n'
-
-        # Add Rationale prefix
-        formatted_input += "Rationale:"
-
-        return formatted_input
-
-    def get_train_set(self, eos_token, instruction, template, cot_prompts, batchsize=32):
-        '''
-        Select only context and question columns
-        '''
-        preprocessed_dataset = []
-        for batch in self.train_set:
-            fbatch = {}
-            fbatch['id'] = batch['id']
-
-            fbatch['finputs'] = self.format_input_with_cot_prompt(eos_token, instruction, cot_prompts, template, batch)
-            preprocessed_dataset.append(fbatch)
-
-        return preprocessed_dataset
-
-    def extract_answer(self, model_answers):
-        '''
-        Extract the succinct answers from the model generated texts
-        '''
-        pass
-
-class VQA:
-
-    def __init__(self):
-        self.train_set = []
-
-        # Read image captions
-        captions = {}
-        with open("/scratch/t.tovi/datasets/annotations/captions_train2017.json", "r") as f:
-            data = json.load(f)
-
-        # Group captions for the same image
-        for anno in data['annotations']:
-            if anno['image_id'] in captions:
-                captions[anno['image_id']]['captions'].append(anno['caption'])
-            else:
-                captions[anno['image_id']] = {
-                    'file_name': '',
-                    'captions': [anno['caption']],
-                }
-
-        for image_info in data['images']:
-            captions[image_info['id']]['file_name'] = image_info['file_name']
-
-        # Read VQA answers
-        answer_map = {}
-        with open("/scratch/t.tovi/datasets/v2_mscoco_train2014_annotations.json", 'r') as f:
-            answers = json.load(f)
-            for answer in answers['annotations']:
-                answer_map[answer['question_id']] = answer['answers']
-
-        # Read VQA questions
-        with open("/scratch/t.tovi/datasets/v2_OpenEnded_mscoco_train2014_questions.json", 'r') as f:
-            questions = json.load(f)
-
-        for question in questions['questions']:
-            question['captions'] = captions[question['image_id']]
-            question['answers'] = answer_map[question['question_id']]
-            self.train_set.append(question)
+            train_set.append(fentry)
         
-    def format_input_with_cot_prompt(self, eos_token, instruction, cot_prompts, cqa_template, cqa):
-        pass
-
-    def get_train_set(self, eos_token, instruction, template, cot_prompts, batchsize=32):
-        '''
-        Select only context and question columns
-        '''
-        pass
-
-    def extract_answer(self, model_answers):
-        '''
-        Extract the succinct answers from the model generated texts
-        '''
-        pass
+        super().__init__(train_set, [])
