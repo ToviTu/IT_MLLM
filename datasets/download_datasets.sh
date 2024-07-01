@@ -30,6 +30,7 @@ cd "$COMMONSENSEQA_DIR"
 
 echo "Downloading CommonsenseQA dataset..."
 wget --no-check-certificate https://s3.amazonaws.com/commensenseqa/test_rand_split_no_answers.jsonl -O test_rand_split.jsonl
+wget --no-check-certificate https://s3.amazonaws.com/commensenseqa/dev_rand_split.jsonl -O dev_rand_split.jsonl
 
 echo "CommonsenseQA dataset downloaded successfully."
 

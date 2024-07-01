@@ -16,6 +16,12 @@ import torch
 import model_ARC_loader
 import pdb
 
+storage_dir = os.environ.get('STORAGE_DIR', '/default/storage/path')
+working_dir = os.environ.get('WORKING_DIR', '/default/working/path')
+src = os.path.join(storage_dir, 'IT_MLLM/llava/eval/arc_answers.jsonl')
+test_split = os.path.join(storage_dir, "IT_MLLM/datasets/ARC-V1-Feb2018-2/ARC-Easy/ARC-Easy-Test.jsonl")
+    
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dir', type=str, default="./data/eval/arc")
@@ -397,8 +403,6 @@ class ARCAccuracyEvaluator:
 if __name__ == '__main__':
     args = parse_args()
 
-    src = '/scratch/peterni/wustl/IT_MLLM/llava/eval/arc_answers.jsonl'
-    test_split = '/scratch/peterni/wustl/IT_MLLM/datasets/ARC-V1-Feb2018-2/ARC-Easy/ARC-Easy-Test.jsonl'
     dst = os.path.join(args.dir, 'answers_upload', args.split, f'{args.ckpt}_eval.json')
     regenerated_dst = os.path.join(args.dir, 'answers_upload', args.split, f'{args.ckpt}_regenerated.json')
 
