@@ -1,5 +1,4 @@
 #!/bin/bash
-
 set -e
 
 DEST_DIR="$STORAGE_DIR/datasets/"
