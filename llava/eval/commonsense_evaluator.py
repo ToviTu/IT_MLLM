@@ -4,7 +4,6 @@ import os
 from tqdm import tqdm
 import argparse
 import re
-import transformers
 import huggingface_hub
 import tokenizers
 from llava.model.builder import load_pretrained_model
@@ -18,13 +17,13 @@ import pdb
 
 storage_dir = os.environ.get('STORAGE_DIR', '/default/storage/path')
 working_dir = os.environ.get('WORKING_DIR', '/default/working/path')
-src = os.path.join(storage_dir, 'IT_MLLM/llava/eval/arc_answers.jsonl')
-test_split = os.path.join(storage_dir, "IT_MLLM/datasets/ARC-V1-Feb2018-2/ARC-Easy/ARC-Easy-Test.jsonl")
+src = os.path.join(storage_dir, 'IT_MLLM/llava/eval/commonsense_qa_answer.jsonl')
+test_split = os.path.join(storage_dir, "IT_MLLM/datasets/commonsenseqa/dev_rand_split.jsonl")
     
-
+    
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dir', type=str, default="./data/eval/arc")
+    parser.add_argument('--dir', type=str, default="./data/eval/commonsenseqa")
     parser.add_argument('--ckpt', type=str, default="model_v1")
     parser.add_argument('--split', type=str, default="test")
     parser.add_argument('--model-path', type=str, default="liuhaotian/llava-v1.5-7b")
@@ -36,8 +35,6 @@ def parse_args():
     parser.add_argument("--conv-mode", type=str, default="llava_v1")
     parser.add_argument('--summarize-strategy', type=str, default="pattern", choices=["llm", "pattern"])
     return parser.parse_args()
-
-
 
 class EvalAIAnswerProcessor:
     CONTRACTIONS = {
@@ -203,7 +200,8 @@ class EvalAIAnswerProcessor:
         "?",
         "!",
     ]
-
+    
+    
     def __init__(self, *args, **kwargs):
         pass
 
@@ -246,7 +244,8 @@ class EvalAIAnswerProcessor:
         item = self.process_digit_article(item)
         return item.upper()  
 
-class ARCAccuracyEvaluator:
+
+class CommonsenseQAEvaluator:
     def __init__(self, args):
         self.model_path = args.model_path
         self.model_base = args.model_base
@@ -258,6 +257,21 @@ class ARCAccuracyEvaluator:
         self.top_p = args.top_p
         self.num_beams = args.num_beams
         self.max_new_tokens = args.max_new_tokens
+
+    def load_data(self):
+        gt_answers = {}
+        with open(self.gt_path, 'r') as f:
+            for line in f:
+                entry = json.loads(line)
+                gt_answers[entry['id']] = entry['answerKey']
+        
+        predictions = {}
+        with open(self.predictions_path, 'r') as f:
+            for line in f:
+                entry = json.loads(line)
+                predictions[entry['question_id']] = entry['text'].strip().split('.')[1].strip()  # Assuming format "X. answer"
+
+        return predictions, gt_answers
 
     def eval_pred_list(self, pred_list, gt_list):
         pred_scores = []
@@ -342,7 +356,7 @@ class ARCAccuracyEvaluator:
     
     def regenerate_answers_pattern(self, incorrect_answers):
         regenerated_answers = []
-        pattern = re.compile(r'\b([ABCD1234])\.')
+        pattern = re.compile(r'\b([ABCD])\.')
 
         for entry in incorrect_answers:
             text = entry["text"]
@@ -422,7 +436,7 @@ if __name__ == '__main__':
     print(f'total results: {len(results)}, total questions: {len(gt_answers)}')
 
     # Evaluate
-    evaluator = ARCAccuracyEvaluator(args)
+    evaluator = CommonsenseQAEvaluator(args)
     accuracy, all_answers, regenerated_answers_list = evaluator.eval_pred_list(results, gt_answers)
 
     # Save evaluation results
