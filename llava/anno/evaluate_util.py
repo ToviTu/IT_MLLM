@@ -5,10 +5,10 @@ import numpy as np
 import csv
 import string
 import re
+import os
 import tqdm
 
-
-DATA_DIR = "/scratch/t.tovi/dataset/"
+DATA_DIR = os.environ["HF_DATASETS_CACHE"]
 
 class DatasetFactory:
 
@@ -18,7 +18,6 @@ class DatasetFactory:
         self.val_set = val_set
 
         assert "question" in self.train_set[0] and "answer" in self.train_set[0], "Expect question and answer columns in the dataset"
-        self.has_context = "context" in self.train_set[0]
 
     def format_input(self, context="", question="", choices="", answer="", template=llava_cqa, prefix='', suffix=''):
         '''
@@ -33,20 +32,21 @@ class DatasetFactory:
     def add_rationale(self, rationale):
         self.rationale = rationale
 
-    def format_input_with_rationale(self, context="", question="", choices="", answer="", rationale="", template=llava_cqa, prefix='', suffix=''):
-        if choices:
-            return prefix + template(context, choices, question, answer + '\n' + rationale) + suffix
-        else:
-            return prefix + template(context, question, answer + '\n' + rationale) + suffix
+    # def format_input_with_rationale(self, context="", question="", choices="", answer="", rationale="", template=llava_cqa, prefix='', suffix=''):
+    #     if choices:
+    #         return prefix + template(context, choices, question, answer + '\n' + rationale) + suffix
+    #     else:
+    #         return prefix + template(context, question, answer + '\n' + rationale) + suffix
     
     def format_input_with_cot_example(self, eos_token, instruction, cot_prompts, cqa_template, cqa):
 
         # Randomly select a cot exmaple
         cot_example = cot_prompts[np.random.choice(len(cot_prompts))]
         cot_example = self.format_input(
-                context = cot_example['Context'],
-                question = cot_example['Question'],
-                answer = cot_example['Answer'],
+                context = cot_example['context'] if 'context' in cot_example else '',
+                question = cot_example['question'],
+                choices= cot_example['choices'] if 'choices' in cot_example else '',
+                answer = cot_example['answer'],
                 template = cqa_template, 
                 prefix = instruction + '\n', 
                 suffix = '\n' + "Rationale: " + cot_example['Rationale'] + eos_token
@@ -54,7 +54,7 @@ class DatasetFactory:
 
         # Apply template to the question
         question = self.format_input(
-                context = cqa['context'],
+                context = cqa['context'] if 'context' in cqa else '',
                 question = cqa['question'],
                 answer = cqa['answer'], 
                 template = cqa_template,
@@ -63,14 +63,13 @@ class DatasetFactory:
             )
 
         return cot_example + question
-    
+
     def process(self, split='train', mode='train', template=llava_cqa, eos_token='', instruction='', cot=False, cot_prompts=None):
         '''
-        Select only context and question columns
+        Format the datasets accoridng to the needs
         '''
         data = self.train_set if split == 'train' else self.val_set
         if cot:
-            assert mode=='train', "Only in training mode"
             assert cot_prompts is not None, "CoT prompts are required"
             mapping_func = lambda example: {
                     'id': example['id'],
@@ -80,8 +79,9 @@ class DatasetFactory:
             mapping_func = lambda example: {
                     'id': example['id'],
                     'finputs': self.format_input(
-                        context=example['context'] if self.has_context else "", 
+                        context=example['context'] if 'context' in example else "", 
                         question=example['question'], 
+                        choices=example['choices'] if "choices" in example else "",
                         answer=example['answer'] if mode=='train' else "", 
                         template=template,
                         prefix=instruction + '\n' if instruction else "",
@@ -93,9 +93,10 @@ class DatasetFactory:
     def process_with_rationale(self, rationale=None, template=llava_cqa, instruction=''):
         mapping_func = lambda example, rationale: {
                 'id': example['id'],
-                'finputs': self.format_input_with_rationale(
-                    context=example['context'] if self.has_context else "", 
+                'finputs': self.format_input(
+                    context=example['context'] if 'context' in example else "", 
                     question=example['question'], 
+                    choices=example['choices'] if "choices" in example else "",
                     answer=rationale + "\nTherefore, the answer is " + example['answer'], 
                     template=template,
                     prefix=instruction + '\n' if instruction else "",
@@ -181,7 +182,7 @@ class SQuAD(DatasetFactory):
 class StrategyQA(DatasetFactory):
 
     def __init__(self):
-        with open(f"{DATA_DIR}strategyqa_train.json", 'r') as f:
+        with open(f"{DATA_DIR}/strategyqa/strategyqa_train.json", 'r') as f:
             data = json.load(f)
         train_set = data
 
@@ -218,39 +219,38 @@ class StrategyQA(DatasetFactory):
             ground_truth.append({'id':id, 'answers': all_answers[id]})
         return extracted_answers, ground_truth
 
-
-class CommonsenseQA:
+class CommonsenseQA(DatasetFactory):
 
     def __init__(self):
         # Read raw dataset
         data = []
-        with open(f"{DATA_DIR}/train_rand_split.jsonl", 'r') as file:
+        with open(f"{DATA_DIR}/commonsenseqa/train_rand_split.jsonl", 'r') as file:
             for line in file:
                 data.append(json.loads(line))
 
         # Format question inputs
         fdata = []
         for entry in data:
-            fchoices = ""
+            fchoices = []
             for choice in entry['question']['choices']:
-                fchoices += choice['label'] + " " + choice['text'] + '\n'
+                fchoices.append(choice['label'] + " " + choice['text'])
             
             fentry = {}
             fentry['id'] = entry['id']
-            fentry['context'] = fchoices
             fentry['question'] = entry['question']['stem']
+            fentry['choices'] = fchoices
             fentry['answer'] = entry['answerKey']
 
             fdata.append(fentry)
 
         super().__init__(fdata, [])
 
-class CosmosQA:
+class CosmosQA(DatasetFactory):
 
     def __init__(self):
         # Read raw dataset
         data = []
-        with open(f"{DATA_DIR}/cosmosqa_train.csv", 'r') as f:
+        with open(f"{DATA_DIR}/cosmosqa/train.csv", 'r') as f:
             reader = csv.reader(f)
             next(reader, None)
             for line in reader:
@@ -270,7 +270,7 @@ class CosmosQA:
 
         super().__init__(data, [])
 
-class ARC:
+class ARC(DatasetFactory):
 
     def __init__(self):
         # Read raw dataset
@@ -290,7 +290,7 @@ class ARC:
             fentry['id'] = entry['id']
             fentry['question'] = entry['question']['stem']
             choices = [choice['label']+ " " + choice['text'] for choice in entry['question']['choices']]
-            fentry['choices'] = "\n".join(choices)
+            fentry['choices'] = choices
             fentry['answer'] = entry['answerKey']
             train_set.append(fentry)
         
