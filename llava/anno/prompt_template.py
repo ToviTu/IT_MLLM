@@ -15,10 +15,18 @@ mc_prompt = [
     "Select the most appropriate answer from the following options:",
 ]
 
+fa_prompt = [
+    "Therefore, the correct answer is:",
+    "Hence, the correct answer is:",
+    "To summarize, the correct answer is:",
+    "In conclusion, the correct answer is:",
+    "The best answer is:",
+]
+
 # Prompt templates for LLaVA
 
-llava_cqa = lambda c, q, a: (f"{c}\n" if c else "") + f"User: {q}\nAssistant: {a}"
-llava_vqa = lambda c, q, a: f"<image>{c}\nUser: {q}\nAssistant:{a}"
+llava_cqa = lambda c, q, a: "User: " + (f'{c}\n' if c else '') + q + "\nAssistant: " + a
+llava_vqa = lambda c, q, a: "<image>" + llava_cqa(c, q, a)
 llava_cmc = lambda c, mc, q, a: llava_cqa(
     c,
     q+" "+random.choice(mc_prompt)+"\n".join([each for each in mc]),

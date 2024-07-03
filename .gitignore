@@ -2,6 +2,7 @@
 *set_secretes.sh
 wandb/
 
+*.out 
 # some sh files
 *set_environ_var.sh
 *run_interactive_pod.sh
