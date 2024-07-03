@@ -18,7 +18,7 @@ import math
 storage_dir = os.environ.get('STORAGE_DIR', '/default/storage/path')
 working_dir = os.environ.get('WORKING_DIR', '/default/working/path')
 question_file_path = os.path.join(storage_dir, "IT_MLLM/datasets/commonsenseqa/dev_rand_split.jsonl")
-answer_file_path = os.path.join(storage_dir, "IT_MLLM/llava/eval/commonsense_qa_answer.jsonl")
+answer_file_path = os.path.join(storage_dir, "IT_MLLM/llava/eval/data/inference/commonsense_qa_answer.jsonl")
 
 def split_list(lst, n):
     """Split a list into n (roughly) equal-sized chunks"""

@@ -17,7 +17,7 @@ import pdb
 
 storage_dir = os.environ.get('STORAGE_DIR', '/default/storage/path')
 working_dir = os.environ.get('WORKING_DIR', '/default/working/path')
-src = os.path.join(storage_dir, 'IT_MLLM/llava/eval/commonsense_qa_answer.jsonl')
+src = os.path.join(storage_dir, 'IT_MLLM/llava/eval/data/inference/commonsense_qa_answer.jsonl')
 test_split = os.path.join(storage_dir, "IT_MLLM/datasets/commonsenseqa/dev_rand_split.jsonl")
     
     
