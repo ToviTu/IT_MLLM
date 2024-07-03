@@ -20,7 +20,7 @@ import sys
 storage_dir = os.environ.get('STORAGE_DIR', '/default/storage/path')
 working_dir = os.environ.get('WORKING_DIR', '/default/working/path')
 question_file_path = os.path.join(storage_dir, "IT_MLLM/datasets/ARC-V1-Feb2018-2/ARC-Easy/ARC-Easy-Test.jsonl")
-answer_file_path = os.path.join(storage_dir, "IT_MLLM/llava/eval/arc_answers.jsonl")
+answer_file_path = os.path.join(storage_dir, "IT_MLLM/llava/eval/data/inference/arc_answers.jsonl")
 
 def split_list(lst, n):
     """Split a list into n (roughly) equal-sized chunks"""
