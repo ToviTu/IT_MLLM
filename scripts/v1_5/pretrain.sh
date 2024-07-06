@@ -1,15 +1,11 @@
 #!/bin/bash
 
-# Unknown torchrun DDP error
-export MASTER_PORT=61000
-
-deepspeed --master_port=7000 \
-    ${WORKING_DIR}/llava/train/train_mem.py \
-    --deepspeed ${WORKING_DIR}/scripts/config/zero2.json \
-    --model_name_or_path meta-llama/Llama-2-7b-hf \
+deepspeed llava/train/train_mem.py \
+    --deepspeed ./scripts/zero2.json \
+    --model_name_or_path lmsys/vicuna-13b-v1.5 \
     --version plain \
-    --data_path ${STORAGE_DIR}/datasets/llava/blip_laion_cc_sbu_558k.json \
-    --image_folder ${STORAGE_DIR}/datasets/llava/images \
+    --data_path ./playground/data/LLaVA-Pretrain/blip_laion_cc_sbu_558k.json \
+    --image_folder ./playground/data/LLaVA-Pretrain/images \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \
     --tune_mm_mlp_adapter True \
@@ -17,7 +13,7 @@ deepspeed --master_port=7000 \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
     --bf16 True \
-    --output_dir ${STORAGE_DIR}/models/llava-llama2-7b-pretrain \
+    --output_dir ./checkpoints/llava-v1.5-13b-pretrain \
     --num_train_epochs 1 \
     --per_device_train_batch_size 32 \
     --per_device_eval_batch_size 4 \
@@ -36,4 +32,4 @@ deepspeed --master_port=7000 \
     --gradient_checkpointing True \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
-    --report_to wandb \
+    --report_to wandb

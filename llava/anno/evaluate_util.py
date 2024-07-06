@@ -1,5 +1,5 @@
 from datasets import load_dataset, load_metric
-from llava.anno.prompt_template import llava_cqa, llava_cmc
+from llava.anno.prompt_template import llava_cqa, llava_cmc, fa_prompt
 import json
 import numpy as np
 import csv
@@ -7,6 +7,7 @@ import string
 import re
 import os
 import tqdm
+import random
 
 DATA_DIR = os.environ["HF_DATASETS_CACHE"]
 
@@ -97,7 +98,7 @@ class DatasetFactory:
                     context=example['context'] if 'context' in example else "", 
                     question=example['question'], 
                     choices=example['choices'] if "choices" in example else "",
-                    answer=rationale + "\nTherefore, the answer is " + example['answer'], 
+                    answer=rationale + f"\n{random.choice(fa_prompt)} " + example['answer'] + ".", 
                     template=template,
                     prefix=instruction + '\n' if instruction else "",
                 ),
