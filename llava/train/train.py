@@ -751,7 +751,8 @@ class DataCollatorForSupervisedDataset(object):
         input_ids = torch.nn.utils.rnn.pad_sequence(
             input_ids,
             batch_first=True,
-            padding_value=self.tokenizer.pad_token_id)
+            padding_value=self.tokenizer.pad_token_id \
+                if hasattr(self.tokenizer, 'pad_token_id') else self.tokenizer.eos_token_id)
         labels = torch.nn.utils.rnn.pad_sequence(labels,
                                                  batch_first=True,
                                                  padding_value=IGNORE_INDEX)

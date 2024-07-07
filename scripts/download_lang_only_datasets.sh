@@ -19,3 +19,10 @@ rm ${ARC_DIR}/ARC-V1-Feb2018.zip
 COMMONSENSE_QA_DIR="${OUTPUT_DIR}/commonsenseqa"
 wget -P $COMMONSENSE_QA_DIR https://s3.amazonaws.com/commensenseqa/train_rand_split.jsonl --no-check-certificate
 wget -P $COMMONSENSE_QA_DIR https://s3.amazonaws.com/commensenseqa/test_rand_split.jsonl --no-check-certificate
+
+# Download LLaVA Pretrain dataset
+LLAVA_DIR="${OUTPUT_DIR}/llava"
+wget -P $LLAVA_DIR https://huggingface.co/datasets/liuhaotian/LLaVA-Pretrain/resolve/main/blip_laion_cc_sbu_558k.json?download=true --no-check-certificate
+wget -P $LLAVA_DIR https://huggingface.co/datasets/liuhaotian/LLaVA-Pretrain/resolve/main/images.zip?download=true --no-check-certificate
+unzip -d $LLAVA_DIR ${LLAVA_DIR}/images.zip
+rm ${LLAVA_DIR}/images.zip

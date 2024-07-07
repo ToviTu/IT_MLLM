@@ -2,11 +2,14 @@
 
 # Unknown torchrun DDP error
 export MASTER_PORT=61000
+# Unknown offloading error
+export DS_SKIP_CUDA_CHECK=1
 
 deepspeed --master_port=7000 \
+    --include=localhost:0,1,2,3 \
     ${WORKING_DIR}/llava/train/train_mem.py \
-    --deepspeed ${WORKING_DIR}/scripts/config/zero2.json \
-    --model_name_or_path meta-llama/Llama-2-7b-hf \
+    --deepspeed ${WORKING_DIR}/scripts/config/zero2_offload.json \
+    --model_name_or_path meta-llama/Meta-Llama-3-8B \
     --version plain \
     --data_path ${STORAGE_DIR}/datasets/llava/blip_laion_cc_sbu_558k.json \
     --image_folder ${STORAGE_DIR}/datasets/llava/images \
@@ -17,7 +20,7 @@ deepspeed --master_port=7000 \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
     --bf16 True \
-    --output_dir ${STORAGE_DIR}/models/llava-llama2-7b-pretrain \
+    --output_dir ${STORAGE_DIR}/models/llava-llama3-8b-pretrain \
     --num_train_epochs 1 \
     --per_device_train_batch_size 32 \
     --per_device_eval_batch_size 4 \
