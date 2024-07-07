@@ -15,16 +15,17 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline, AutoMode
 import torch
 import model_ARC_loader
 import pdb
+import csv
+import pandas as pd
 
 storage_dir = os.environ.get('STORAGE_DIR', '/default/storage/path')
 working_dir = os.environ.get('WORKING_DIR', '/default/working/path')
-src = os.path.join(storage_dir, 'IT_MLLM/llava/eval/data/inference/vicuna/arc_answers.jsonl')
-test_split = os.path.join(storage_dir, "IT_MLLM/datasets/ARC-V1-Feb2018-2/ARC-Easy/ARC-Easy-Test.jsonl")
-    
+test_split = os.path.join(storage_dir, "IT_MLLM/datasets/cosmosqa/dev.csv")
+src = os.path.join(storage_dir, "IT_MLLM/llava/eval/data/inference/vicuna/cosmosqa_answers.jsonl")
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dir', type=str, default="./data/eval/arc")
+    parser.add_argument('--dir', type=str, default="./data/eval/cosmosqa")
     parser.add_argument('--ckpt', type=str, default="model_v1")
     parser.add_argument('--split', type=str, default="test")
     parser.add_argument('--model-path', type=str, default="liuhaotian/llava-v1.5-7b")
@@ -246,7 +247,7 @@ class EvalAIAnswerProcessor:
         item = self.process_digit_article(item)
         return item.upper()  
 
-class ARCAccuracyEvaluator:
+class CosmosAccuracyEvaluator:
     def __init__(self, args):
         self.model_path = args.model_path
         self.model_base = args.model_base
@@ -415,14 +416,17 @@ if __name__ == '__main__':
 
     # Load ground truth
     gt_answers = {}
-    for line in open(test_split):
-        entry = json.loads(line)
-        gt_answers[entry['id']] = entry['answerKey']
-
+    data = pd.read_csv(test_split)
+    label_map = {0: 'A', 1: 'B', 2: 'C', 3: 'D'} 
+    for index, row in data.iterrows():
+       
+        gt_answers[row['id']] = label_map[int(row['label'])]  
+        
+        
     print(f'total results: {len(results)}, total questions: {len(gt_answers)}')
 
     # Evaluate
-    evaluator = ARCAccuracyEvaluator(args)
+    evaluator = CosmosAccuracyEvaluator(args)
     accuracy, all_answers, regenerated_answers_list = evaluator.eval_pred_list(results, gt_answers)
 
     # Save evaluation results
