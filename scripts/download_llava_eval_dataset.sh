@@ -3,6 +3,7 @@
 OUTPUT_DIR="${STORAGE_DIR}/dataset/"
 EVAL_DIR="${STORAGE_DIR}/dataset/eval"
 
+
 # Download VQAv2 Train Split
 # wget -P $OUTPUT_DIR https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Questions_Train_mscoco.zip
 # wget -P $OUTPUT_DIR https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Annotations_Train_mscoco.zip
@@ -23,18 +24,20 @@ EVAL_DIR="${STORAGE_DIR}/dataset/eval"
 
 # # Download LLaVA pretraining dataset
 # wget -P $OUTPUT_DIR https://huggingface.co/datasets/liuhaotian/LLaVA-Pretrain/resolve/main/blip_laion_cc_sbu_558k.json
-# #wget -P $OUTPUT_DIR https://huggingface.co/datasets/liuhaotian/LLaVA-CC3M-Pretrain-595K/resolve/main/images.zip
+# wget -P $OUTPUT_DIR https://huggingface.co/datasets/liuhaotian/LLaVA-CC3M-Pretrain-595K/resolve/main/images.zip
 # wget -P $OUTPUT_DIR https://huggingface.co/datasets/liuhaotian/LLaVA-Pretrain/resolve/main/images.zip
 # unzip -d ${OUTPUT_DIR}images/ ${OUTPUT_DIR}images.zip
 
 
-# Updated on Jun.18th
+# Updated on July.5th
 # Download Evaluation Benchmarks for LLaVA v1.5
 
 # Download Scripts (containing custom annotations, scripts, and the prediction files with LLaVA v1.5)
-mkdir -p /scratch/vision_share/dataset/eval/
-wget -P $EVAL_DIR --no-check-certificate 'https://drive.google.com/uc?export=download&id=1atZSBBrAX54yYpxtVVW33zFvcnaHeFPy' -O "$EVAL_DIR/eval.zip"
-unzip -d $EVAL_DIR ${EVAL_DIR}/eval.zip 
+# cd ${STORAGE_DIR}
+# mkdir -p dataset/eval/
+# cd ${WORKING_DIR}
+# wget -P $EVAL_DIR --no-check-certificate 'https://drive.google.com/uc?export=download&id=1atZSBBrAX54yYpxtVVW33zFvcnaHeFPy' -O "$EVAL_DIR/eval.zip"
+# unzip -d $EVAL_DIR ${EVAL_DIR}/eval.zip 
 
 # Download VQAv2 (More than 12 GB)
 # wget -P $EVAL_DIR/vqav2 http://images.cocodataset.org/zips/test2015.zip -O "$EVAL_DIR/vqav2/test2015.zip"
@@ -53,8 +56,8 @@ unzip -d $EVAL_DIR ${EVAL_DIR}/eval.zip
 # unzip -d $EVAL_DIR/gqa/data ${EVAL_DIR}/gqa/data/eval.zip
 
 # Download VisWiz 
-# wget -P $EVAL_DIR/vizwiz https://vizwiz.cs.colorado.edu/VizWiz_final/vqa_data/Annotations.zip -O "$EVAL_DIR/vizwiz/Annotations.zip"
-# wget -P $EVAL_DIR/vizwiz https://vizwiz.cs.colorado.edu/VizWiz_final/images/test.zip -O "$EVAL_DIR/vizwiz/test.zip"
+# wget -P $EVAL_DIR/vizwiz --no-check-certificate https://vizwiz.cs.colorado.edu/VizWiz_final/vqa_data/Annotations.zip -O "$EVAL_DIR/vizwiz/Annotations.zip"
+# wget -P $EVAL_DIR/vizwiz --no-check-certificate https://vizwiz.cs.colorado.edu/VizWiz_final/images/test.zip -O "$EVAL_DIR/vizwiz/test.zip"
 # unzip -d $EVAL_DIR/vizwiz ${EVAL_DIR}/vizwiz/Annotations.zip
 # unzip -d $EVAL_DIR/vizwiz ${EVAL_DIR}/vizwiz/test.zip
 
