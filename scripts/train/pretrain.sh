@@ -8,7 +8,7 @@ export DS_SKIP_CUDA_CHECK=1
 deepspeed --master_port=7000 \
     --include=localhost:0,1,2,3 \
     ${WORKING_DIR}/llava/train/train_mem.py \
-    --deepspeed ${WORKING_DIR}/scripts/config/zero2_offload.json \
+    --deepspeed ${WORKING_DIR}/scripts/config/zero2.json \
     --model_name_or_path meta-llama/Meta-Llama-3-8B \
     --version plain \
     --data_path ${STORAGE_DIR}/datasets/llava/blip_laion_cc_sbu_558k.json \
