@@ -21,7 +21,7 @@ import pandas as pd
 storage_dir = os.environ.get('STORAGE_DIR', '/default/storage/path')
 working_dir = os.environ.get('WORKING_DIR', '/default/working/path')
 test_split = os.path.join(storage_dir, "IT_MLLM/datasets/cosmosqa/dev.csv")
-src = os.path.join(storage_dir, "IT_MLLM/llava/eval/data/inference/vicuna/cosmosqa_answers.jsonl")
+src = os.path.join(storage_dir, "IT_MLLM/llava/eval/data/inference/cosmosqa_answers.jsonl")
 
 def parse_args():
     parser = argparse.ArgumentParser()
