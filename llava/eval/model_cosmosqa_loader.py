@@ -5,6 +5,7 @@ import json
 from tqdm import tqdm
 import shortuuid
 from torch.utils.data import Dataset, DataLoader
+import pandas as pd
 
 from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 from llava.conversation import conv_templates, SeparatorStyle
@@ -16,8 +17,8 @@ import math
 
 storage_dir = os.environ.get('STORAGE_DIR', '/default/storage/path')
 working_dir = os.environ.get('WORKING_DIR', '/default/working/path')
-question_file_path = os.path.join(storage_dir, "IT_MLLM/datasets/cosmosqa/test.jsonl")
-answer_file_path = os.path.join(storage_dir, "IT_MLLM/llava/eval/data/inference/cosmosqa_answers.jsonl")
+question_file_path = os.path.join(storage_dir, "IT_MLLM/datasets/cosmosqa/dev.csv")
+answer_file_path = os.path.join(storage_dir, "IT_MLLM/results/inference/cosmosqa_answers.jsonl")
 
 def split_list(lst, n):
     """Split a list into n (roughly) equal-sized chunks"""
@@ -32,34 +33,38 @@ def get_chunk(lst, n, k):
 
 # Custom dataset class for CosmosQA
 class CosmosQADataset(Dataset):
-    def __init__(self, json_file, tokenizer, model_config):
-        self.data = []
-        with open(json_file, 'r') as f:
-            self.data = [json.loads(line) for line in f]
+    def __init__(self, csv_file, tokenizer, model_config):
+        self.data_frame = pd.read_csv(csv_file)
         self.tokenizer = tokenizer
         self.model_config = model_config
 
+    def __len__(self):
+        return len(self.data_frame)
+
     def __getitem__(self, index):
-        row = self.data[index]
+        row = self.data_frame.iloc[index]
         question = row["question"]
         context = row["context"]
-        answers = [row[f"answer{i}"] for i in range(4)]
+        answers = [row[f"answer{i}"] for i in range(4)]  
         options_with_labels = [f"{chr(65 + i)}. {answers[i]}" for i in range(4)]
-        
+
         prompt = f"Context: {context}\nQuestion: {question}\nOptions: {', '.join(options_with_labels)}\nAnswer with the option's letter from the given choices directly."
 
-        conv = conv_templates[args.conv_mode].copy()
-        conv.append_message(conv.roles[0], prompt)
-        conv.append_message(conv.roles[1], None)
-        final_prompt = conv.get_prompt()
-        print("prompt_final: ", final_prompt)
+        if hasattr(self, 'conv_templates') and hasattr(self, 'args'): 
+            conv = self.conv_templates[self.args.conv_mode].copy()
+            conv.append_message(conv.roles[0], prompt)
+            conv.append_message(conv.roles[1], None)
+            final_prompt = conv.get_prompt()
+        else:
+            final_prompt = prompt 
 
-        input_ids = self.tokenizer(final_prompt, return_tensors='pt').input_ids
+        input_ids = self.tokenizer(final_prompt, return_tensors='pt', **self.model_config).input_ids.squeeze(0)  
 
-        return input_ids, final_prompt, row["id"]
-
-    def __len__(self):
-        return len(self.data)
+        return {
+            'input_ids': input_ids,
+            'prompt': final_prompt,
+            'id': row["id"]
+        }
 
 
 def collate_fn(batch):
