@@ -12,7 +12,7 @@ from llava.conversation import conv_templates, SeparatorStyle
 from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
 from llava.mm_utils import get_model_name_from_path
-
+import pdb
 import math
 
 storage_dir = os.environ.get('STORAGE_DIR', '/default/storage/path')
@@ -45,27 +45,19 @@ class CosmosQADataset(Dataset):
         row = self.data_frame.iloc[index]
         question = row["question"]
         context = row["context"]
-        answers = [row[f"answer{i}"] for i in range(4)]  
+        answers = [row[f"answer{i}"] for i in range(4)]
         options_with_labels = [f"{chr(65 + i)}. {answers[i]}" for i in range(4)]
 
         prompt = f"Context: {context}\nQuestion: {question}\nOptions: {', '.join(options_with_labels)}\nAnswer with the option's letter from the given choices directly."
 
-        if hasattr(self, 'conv_templates') and hasattr(self, 'args'): 
-            conv = self.conv_templates[self.args.conv_mode].copy()
-            conv.append_message(conv.roles[0], prompt)
-            conv.append_message(conv.roles[1], None)
-            final_prompt = conv.get_prompt()
-        else:
-            final_prompt = prompt 
+        conv = conv_templates[args.conv_mode].copy()
+        conv.append_message(conv.roles[0], prompt)
+        conv.append_message(conv.roles[1], None)
+        final_prompt = conv.get_prompt()
+        
+        input_ids = self.tokenizer(final_prompt, return_tensors='pt').input_ids
 
-        input_ids = self.tokenizer(final_prompt, return_tensors='pt', **self.model_config).input_ids.squeeze(0)  
-
-        return {
-            'input_ids': input_ids,
-            'prompt': final_prompt,
-            'id': row["id"]
-        }
-
+        return input_ids, final_prompt, row["id"]
 
 def collate_fn(batch):
     input_ids, prompts, ids = zip(*batch)

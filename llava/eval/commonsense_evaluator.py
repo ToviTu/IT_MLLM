@@ -417,8 +417,8 @@ class CommonsenseQAEvaluator:
 if __name__ == '__main__':
     args = parse_args()
 
-    dst = os.path.join(args.dir, 'answers_upload', args.split, f'{args.ckpt}_eval.json')
-    regenerated_dst = os.path.join(args.dir, 'answers_upload', args.split, f'{args.ckpt}_regenerated.json')
+    dst = os.path.join(args.dir, 'results', args.split, f'{args.ckpt}_eval.json')
+    regenerated_dst = os.path.join(args.dir, 'results', args.split, f'{args.ckpt}_regenerated.json')
 
     os.makedirs(os.path.dirname(dst), exist_ok=True)
 

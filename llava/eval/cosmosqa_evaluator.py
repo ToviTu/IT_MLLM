@@ -25,9 +25,9 @@ src = os.path.join(storage_dir, "IT_MLLM/results/inference/cosmosqa_answers.json
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dir', type=str, default="./data/eval/cosmosqa")
+    parser.add_argument('--dir', type=str, default=working_dir)
     parser.add_argument('--ckpt', type=str, default="model_v1")
-    parser.add_argument('--split', type=str, default="test")
+    parser.add_argument('--split', type=str, default="eval")
     parser.add_argument('--model-path', type=str, default="liuhaotian/llava-v1.5-7b")
     parser.add_argument('--model-base', type=str, default=None)
     parser.add_argument('--temperature', type=float, default=0.2)
@@ -404,8 +404,8 @@ class CosmosAccuracyEvaluator:
 if __name__ == '__main__':
     args = parse_args()
 
-    dst = os.path.join(args.dir, 'answers_upload', args.split, f'{args.ckpt}_eval.json')
-    regenerated_dst = os.path.join(args.dir, 'answers_upload', args.split, f'{args.ckpt}_regenerated.json')
+    dst = os.path.join(args.dir, 'results', args.split, f'{args.ckpt}_eval.json')
+    regenerated_dst = os.path.join(args.dir, 'results', args.split, f'{args.ckpt}_regenerated.json')
 
     os.makedirs(os.path.dirname(dst), exist_ok=True)
 
@@ -417,7 +417,7 @@ if __name__ == '__main__':
     # Load ground truth
     gt_answers = {}
     data = pd.read_csv(test_split)
-    label_map = {0: 'A', 1: 'B', 2: 'C', 3: 'D'} 
+    label_map = {0: 'A', 1: 'B', 2: 'C', 3:'D'} 
     for index, row in data.iterrows():
        
         gt_answers[row['id']] = label_map[int(row['label'])]  

@@ -57,8 +57,12 @@ class CommonsenseQADataset(Dataset):
         print("prompt_final: ", prompt)
 
         input_ids = self.tokenizer(prompt, return_tensors='pt').input_ids
-
-        return input_ids, prompt, row["id"]
+    
+        return {
+            'input_ids': input_ids,
+            'prompt': final_prompt,
+            'id': row["id"]
+        }
 
     def __len__(self):
         return len(self.data)
