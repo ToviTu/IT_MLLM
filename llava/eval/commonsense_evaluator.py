@@ -17,7 +17,7 @@ import pdb
 
 storage_dir = os.environ.get('STORAGE_DIR', '/default/storage/path')
 working_dir = os.environ.get('WORKING_DIR', '/default/working/path')
-src = os.path.join(storage_dir, 'IT_MLLM/llava/eval/data/inference/commonsense_qa_answer.jsonl')
+src = os.path.join(storage_dir, 'IT_MLLM/results/inference/commonsense_qa_answer.jsonl')
 test_split = os.path.join(storage_dir, "IT_MLLM/datasets/commonsenseqa/dev_rand_split.jsonl")
     
     
@@ -417,8 +417,8 @@ class CommonsenseQAEvaluator:
 if __name__ == '__main__':
     args = parse_args()
 
-    dst = os.path.join(args.dir, 'answers_upload', args.split, f'{args.ckpt}_eval.json')
-    regenerated_dst = os.path.join(args.dir, 'answers_upload', args.split, f'{args.ckpt}_regenerated.json')
+    dst = os.path.join(args.dir, 'results', args.split, f'{args.ckpt}_eval.json')
+    regenerated_dst = os.path.join(args.dir, 'results', args.split, f'{args.ckpt}_regenerated.json')
 
     os.makedirs(os.path.dirname(dst), exist_ok=True)
 
