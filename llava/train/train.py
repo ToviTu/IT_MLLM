@@ -54,8 +54,7 @@ IS_TOKENIZER_GREATER_THAN_0_14 = version.parse(tokenizers.__version__) >= versio
 class ModelArguments:
     model_name_or_path: Optional[str] = field(default="facebook/opt-125m")
     version: Optional[str] = field(default="v0")
-    freeze_backbone: bool = field(default=False)
-    tune_mm_mlp_adapter: bool = field(default=False)
+    #tune_mm_mlp_adapter: bool = field(default=False)
     vision_tower: Optional[str] = field(default=None)
     mm_vision_select_layer: Optional[int] = field(default=-1)   # default to the last layer
     pretrain_mm_mlp_adapter: Optional[str] = field(default=None)
@@ -81,6 +80,8 @@ class TrainingArguments(transformers.TrainingArguments):
     cache_dir: Optional[str] = field(default=None)
     optim: str = field(default="adamw_torch")
     remove_unused_columns: bool = field(default=False)
+    freeze_backbone: bool = field(default=False)    # New
+    freeze_vision_tower: bool = field(default=False)# New
     freeze_mm_mlp_adapter: bool = field(default=False)
     mpt_attn_impl: Optional[str] = field(default="triton")
     model_max_length: int = field(
@@ -185,27 +186,6 @@ def find_all_linear_names(model):
 def safe_save_model_for_hf_trainer(trainer: transformers.Trainer,
                                    output_dir: str):
     """Collects the state dict and dump to disk."""
-
-    if getattr(trainer.args, "tune_mm_mlp_adapter", False):
-        # Only save Adapter
-        keys_to_match = ['mm_projector']
-        if getattr(trainer.args, "use_im_start_end", False):
-            keys_to_match.extend(['embed_tokens', 'embed_in'])
-
-        weight_to_save = get_mm_adapter_state_maybe_zero_3(trainer.model.named_parameters(), keys_to_match)
-        trainer.model.config.save_pretrained(output_dir)
-
-        current_folder = output_dir.split('/')[-1]
-        parent_folder = os.path.dirname(output_dir)
-        if trainer.args.local_rank == 0 or trainer.args.local_rank == -1:
-            if current_folder.startswith('checkpoint-'):
-                mm_projector_folder = os.path.join(parent_folder, "mm_projector")
-                os.makedirs(mm_projector_folder, exist_ok=True)
-                torch.save(weight_to_save, os.path.join(mm_projector_folder, f'{current_folder}.bin'))
-            else:
-                torch.save(weight_to_save, os.path.join(output_dir, f'mm_projector.bin'))
-        return
-
     if trainer.deepspeed:
         torch.cuda.synchronize()
         trainer.save_model(output_dir)
@@ -842,8 +822,9 @@ def train(attn_implementation=None):
         )
     model.config.use_cache = False
 
-    if model_args.freeze_backbone:
-        model.model.requires_grad_(False)
+    # Freeze components
+    # if model_args.freeze_backbone:
+    #     model.model.requires_grad_(False)
 
     if training_args.bits in [4, 8]:
         from peft import prepare_model_for_kbit_training
@@ -924,16 +905,24 @@ def train(attn_implementation=None):
         model.config.tokenizer_padding_side = tokenizer.padding_side
         model.config.tokenizer_model_max_length = tokenizer.model_max_length
 
-        model.config.tune_mm_mlp_adapter = training_args.tune_mm_mlp_adapter = model_args.tune_mm_mlp_adapter
-        if model_args.tune_mm_mlp_adapter:
-            model.requires_grad_(False)
-            for p in model.get_model().mm_projector.parameters():
-                p.requires_grad = True
-
+        # Component Freezing options
+        model.config.freeze_backbone = training_args.freeze_backbone
+        model.config.freeze_vision_tower = training_args.freeze_vision_tower
         model.config.freeze_mm_mlp_adapter = training_args.freeze_mm_mlp_adapter
-        if training_args.freeze_mm_mlp_adapter:
-            for p in model.get_model().mm_projector.parameters():
-                p.requires_grad = False
+        
+        # Freeze everything
+        #model.requires_grad_(False)
+
+        if model.config.freeze_vision_tower:
+            model.get_vision_tower().requires_grad_(False)
+        
+        if model.config.freeze_mm_mlp_adapter:
+            model.get_model().mm_projector.requires_grad_(False)
+            
+        if model.config.freeze_backbone:
+            model.model.layers.requires_grad_(False)
+            model.model.embed_tokens.requires_grad_(False)
+            model.model.norm.requires_grad_(False)
 
         if training_args.bits in [4, 8]:
             model.get_model().mm_projector.to(dtype=compute_dtype, device=training_args.device)
@@ -943,6 +932,11 @@ def train(attn_implementation=None):
         training_args.use_im_start_end = model_args.mm_use_im_start_end
         model.config.mm_use_im_patch_token = model_args.mm_use_im_patch_token
         model.initialize_vision_tokenizer(model_args, tokenizer=tokenizer)
+
+    # Print the number of trainable model parameters
+    # Unknown bug with ZeRo3
+    trainable_params = sum(p.numel() for p in model.get_model().parameters() if p.requires_grad)
+    print(f"Total number of trainable parameters: {trainable_params}", flush=True)
 
     if training_args.bits in [4, 8]:
         from peft.tuners.lora import LoraLayer
@@ -988,5 +982,5 @@ def train(attn_implementation=None):
                                        output_dir=training_args.output_dir)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":    
     train()
