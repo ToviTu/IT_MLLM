@@ -20,7 +20,7 @@ import sys
 storage_dir = os.environ.get('STORAGE_DIR', '/default/storage/path')
 working_dir = os.environ.get('WORKING_DIR', '/default/working/path')
 question_file_path = os.path.join(storage_dir, "IT_MLLM/datasets/ARC-V1-Feb2018-2/ARC-Easy/ARC-Easy-Test.jsonl")
-answer_file_path = os.path.join(storage_dir, "IT_MLLM/llava/eval/data/inference/arc_answers.jsonl")
+answer_file_path = os.path.join(storage_dir, "IT_MLLM/results/inference/arc_answers.jsonl")
 
 def split_list(lst, n):
     """Split a list into n (roughly) equal-sized chunks"""
@@ -50,12 +50,19 @@ class ARCDataset(Dataset):
 
         options_with_labels = [f"{label}. {option}" for label, option in zip(labels, options)]
         
-        prompt = f"Question: {question}\nOptions: {', '.join(options_with_labels)}\nAnswer with the option's letter from the given choices directly."
+        prompt = f"Question: {question}\nOptions: {', '.join(options_with_labels)}\n Answer with the option's letter from the given choices directly."
 
-        conv = conv_templates[args.conv_mode].copy()
-        conv.append_message(conv.roles[0], prompt)
-        conv.append_message(conv.roles[1], None)
-        final_prompt = conv.get_prompt()
+        if args.model_base == None or args.model_base == "lmsys/vicuna-7b-v1.5":
+            conv = conv_templates[args.conv_mode].copy()
+            conv.append_message(conv.roles[0], prompt)
+            conv.append_message(conv.roles[1], None)
+            final_prompt = conv.get_prompt()
+        if args.model_base == "meta-llama/Llama-2-7b-hf":
+            conv = conv_templates[args.conv_mode].copy()
+            conv.append_message(conv.roles[0], "<s>{{ " + prompt + " }}") 
+            conv.append_message(conv.roles[1], None)  
+            final_prompt = conv.get_prompt()
+            
         print("prompt_final: ", final_prompt)
 
         input_ids = self.tokenizer(final_prompt, return_tensors='pt').input_ids

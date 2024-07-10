@@ -27,7 +27,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dir', type=str, default="./data/eval/arc")
     parser.add_argument('--ckpt', type=str, default="model_v1")
-    parser.add_argument('--split', type=str, default="test")
+    parser.add_argument('--split', type=str, default="eval")
     parser.add_argument('--model-path', type=str, default="liuhaotian/llava-v1.5-7b")
     parser.add_argument('--model-base', type=str, default=None)
     parser.add_argument('--temperature', type=float, default=0.2)
@@ -404,8 +404,8 @@ class ARCAccuracyEvaluator:
 if __name__ == '__main__':
     args = parse_args()
 
-    dst = os.path.join(args.dir, 'results', args.split, f'{args.ckpt}_eval.json')
-    regenerated_dst = os.path.join(args.dir, 'results', args.split, f'{args.ckpt}_regenerated.json')
+    dst = os.path.join(working_dir, 'results', args.split, f'{args.ckpt}_eval.json')
+    regenerated_dst = os.path.join(working_dir, 'results', args.split, f'{args.ckpt}_regenerated.json')
 
     os.makedirs(os.path.dirname(dst), exist_ok=True)
 
