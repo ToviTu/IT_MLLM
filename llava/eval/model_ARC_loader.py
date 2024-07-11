@@ -16,11 +16,11 @@ import pandas as pd
 import math
 import os
 import sys
+import pdb
 
 storage_dir = os.environ.get('STORAGE_DIR', '/default/storage/path')
 working_dir = os.environ.get('WORKING_DIR', '/default/working/path')
 question_file_path = os.path.join(storage_dir, "IT_MLLM/datasets/ARC-V1-Feb2018-2/ARC-Easy/ARC-Easy-Test.jsonl")
-answer_file_path = os.path.join(storage_dir, "IT_MLLM/results/inference/arc_answers.jsonl")
 
 def split_list(lst, n):
     """Split a list into n (roughly) equal-sized chunks"""
@@ -52,15 +52,25 @@ class ARCDataset(Dataset):
         
         prompt = f"Question: {question}\nOptions: {', '.join(options_with_labels)}\n Answer with the option's letter from the given choices directly."
 
-        if args.model_base == None or args.model_base == "lmsys/vicuna-7b-v1.5":
+        if "meta-llama/Llama-2-7b-hf" in args.model_path:
+            final_prompt = "<s>" + prompt  + " Final answer:"
+        elif "llava-llama2-7b-lit" in args.model_path:
+            final_prompt = "<s>" + prompt  + " Final answer:"
+        elif args.model_base == "lmsys/vicuna-7b-v1.5":
             conv = conv_templates[args.conv_mode].copy()
             conv.append_message(conv.roles[0], prompt)
             conv.append_message(conv.roles[1], None)
             final_prompt = conv.get_prompt()
-        if args.model_base == "meta-llama/Llama-2-7b-hf":
+        elif args.model_base == "meta-llama/Llama-2-7b-hf":
+            # conv = conv_templates[args.conv_mode].copy()
+            # conv.append_message(conv.roles[0], "<s>{{ " + prompt + " }}") 
+            # conv.append_message(conv.roles[1], None)  
+            # final_prompt = conv.get_prompt()
+            final_prompt = "<s>" + prompt  + " Final answer:"
+        else:
             conv = conv_templates[args.conv_mode].copy()
-            conv.append_message(conv.roles[0], "<s>{{ " + prompt + " }}") 
-            conv.append_message(conv.roles[1], None)  
+            conv.append_message(conv.roles[0], prompt)
+            conv.append_message(conv.roles[1], None)
             final_prompt = conv.get_prompt()
             
         print("prompt_final: ", final_prompt)
@@ -94,12 +104,14 @@ def eval_model(args):
     model_name = get_model_name_from_path(model_path)
     tokenizer, model, _, context_len = load_pretrained_model(model_path, args.model_base, model_name)
 
-    json_file = os.path.expanduser(args.question_file)
-    answers_file = os.path.expanduser(args.answers_file)
+    answers_file = os.path.join(working_dir, "results/inference", model_name, "arc_answers.jsonl")
     
+    json_file = os.path.expanduser(args.question_file)
+
     answers_dir = os.path.dirname(answers_file)
     if answers_dir:
         os.makedirs(answers_dir, exist_ok=True)
+        
         
     ans_file = open(answers_file, "w")
 
@@ -138,14 +150,14 @@ if __name__ == "__main__":
     parser.add_argument("--model-path", type=str, default="liuhaotian/llava-v1.5-7b")
     parser.add_argument("--model-base", type=str, default=None)
     parser.add_argument("--question-file", type=str, default=question_file_path)
-    parser.add_argument("--answers-file", type=str, default=answer_file_path)
+    parser.add_argument("--answers-file", type=str, default="IT_MLLM/results/inference/arc_answers.jsonl")
     parser.add_argument("--conv-mode", type=str, default="llava_v1")
     parser.add_argument("--num-chunks", type=int, default=1)
     parser.add_argument("--chunk-idx", type=int, default=0)
     parser.add_argument("--temperature", type=float, default=0.2)
     parser.add_argument("--top_p", type=float, default=None)
     parser.add_argument("--num_beams", type=int, default=1)
-    parser.add_argument("--max_new_tokens", type=int, default=128)
+    parser.add_argument("--max_new_tokens", type=int, default=512)
     args = parser.parse_args()
 
     eval_model(args)

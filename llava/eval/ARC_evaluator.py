@@ -18,11 +18,11 @@ import pdb
 
 storage_dir = os.environ.get('STORAGE_DIR', '/default/storage/path')
 working_dir = os.environ.get('WORKING_DIR', '/default/working/path')
-src = os.path.join(storage_dir, "IT_MLLM/results/inference/arc_answers.jsonl")
+# src = os.path.join(storage_dir, "IT_MLLM/results/inference/llava-llama2-7b-pretrain/arc_answers.jsonl")
 test_split = os.path.join(storage_dir, "IT_MLLM/datasets/ARC-V1-Feb2018-2/ARC-Easy/ARC-Easy-Test.jsonl")
 
-
-
+# /scratch/peterni/wustl/IT_MLLM/results/inference/llava-llama2-7b-pretrain/arc_answers.jsonl
+# /scratch/peterni/wustl/IT_MLLM/results/inference/llava-llama2-7b-lit/arc_answers.jsonl
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dir', type=str, default="./data/eval/arc")
@@ -315,7 +315,7 @@ class ARCAccuracyEvaluator:
                 pred_scores.append(score)
         
         if args.summarize_strategy == "pattern":
-            regenerated_answers = self.regenerate_answers_pattern(incorrect_answers)
+            regenerated_answers = self.regenerate_answers_pattern(incorrect_answers, args)
 
             for entry in regenerated_answers:
                 pred_answer = entry["text"]
@@ -341,24 +341,102 @@ class ARCAccuracyEvaluator:
         accuracy = sum(pred_scores) / len(pred_scores)
         return accuracy, all_answers, regenerated_answers_list
     
-    def regenerate_answers_pattern(self, incorrect_answers):
-        regenerated_answers = []
-        pattern = re.compile(r'\b([ABCD1234])\.')
-
-        for entry in incorrect_answers:
-            text = entry["text"]
-            match = pattern.search(text)
+    def regenerate_answers_pattern(self, incorrect_answers, args):
+        if args.ckpt == "llava-llama2-7b-pretrain":
+            # find Final answer: , then select the letter after it
+            regenerated_answers = []
+            pattern = re.compile(r'Final answer: ([ABCD])')
             
-            if match:
-                pred_answer_text = match.group(1)
-            else:
-                pred_answer_text = "None" 
+            for entry in incorrect_answers:
+                text = entry["text"]
+                match = pattern.search(text)
+                
+                if match:
+                    pred_answer_text = match.group(1)
+                    print(f"Matched: {pred_answer_text}")
+                else:
+                    pattern = re.compile(r'\b([ABCD1234])')
+                    match = pattern.search(text)
+                    if match:
+                        pred_answer_text = match.group(1)
+                    else:
+                        pred_answer_text = "None" 
 
-            regenerated_answers.append({
-                "question_id": entry["question_id"],
-                "text": pred_answer_text,
-                "pred_answer_text": text
-            })
+                regenerated_answers.append({
+                    "question_id": entry["question_id"],
+                    "text": pred_answer_text,
+                    "pred_answer_text": text
+                })
+        elif args.ckpt in ["llava-vicuna-7b-lit", "llava-llama2-7b-lit"]:
+            # find pattern: the correct answer is: ABCD
+            regenerated_answers = []
+            pattern = re.compile(r'the correct answer is: ([ABCD])')
+            
+            for entry in incorrect_answers:
+                text = entry["text"]
+                matches = list(pattern.finditer(text))
+                
+                if matches:
+                    # Get the last match
+                    last_match = matches[-1]
+                    pred_answer_text = last_match.group(1)
+                    print(f"Matched: {pred_answer_text}")
+                else:
+                    # search backwards for A. B. C. D. 1. 2. 3. 4.
+                    pattern = re.compile(r'\b([ABCD1234])')
+                    matches = list(pattern.finditer(text))
+                    if matches:
+                        # Get the last match
+                        last_match = matches[-1]
+                        pred_answer_text = last_match.group(1)
+                    else:
+                        pred_answer_text = "None"
+
+                regenerated_answers.append({
+                    "question_id": entry["question_id"],
+                    "text": pred_answer_text,
+                    "pred_answer_text": text
+                })
+        elif args.ckpt == "llava-vicuna-7b-pretrain":
+            print("Using pattern matching for vicuna-7b-pretrain")
+            # find all patterns which matches A. B. C. D. and then select the first one
+            regenerated_answers = []
+            pattern = re.compile(r'\b([ABCD1234])\.')
+            
+            for entry in incorrect_answers:
+                text = entry["text"]
+                matches = list(pattern.finditer(text))
+                
+                if matches:
+                    # Get the first match
+                    first_match = matches[0]
+                    pred_answer_text = first_match.group(1)
+                else:
+                    pred_answer_text = "None"
+
+                regenerated_answers.append({
+                    "question_id": entry["question_id"],
+                    "text": pred_answer_text,
+                    "pred_answer_text": text
+                })
+        else:
+            regenerated_answers = []
+            pattern = re.compile(r'\b([ABCD1234])')
+
+            for entry in incorrect_answers:
+                text = entry["text"]
+                match = pattern.search(text)
+                
+                if match:
+                    pred_answer_text = match.group(1)
+                else:
+                    pred_answer_text = "None" 
+
+                regenerated_answers.append({
+                    "question_id": entry["question_id"],
+                    "text": pred_answer_text,
+                    "pred_answer_text": text
+                })
 
         return regenerated_answers
         
@@ -404,11 +482,13 @@ class ARCAccuracyEvaluator:
 if __name__ == '__main__':
     args = parse_args()
 
-    dst = os.path.join(working_dir, 'results', args.split, f'{args.ckpt}_eval.json')
-    regenerated_dst = os.path.join(working_dir, 'results', args.split, f'{args.ckpt}_regenerated.json')
+    dst = os.path.join(working_dir, 'results', args.split, args.ckpt, 'arc_eval.json')
+    regenerated_dst = os.path.join(working_dir, 'results', args.split, args.ckpt, 'arc_regenerated.json')
 
     os.makedirs(os.path.dirname(dst), exist_ok=True)
 
+    src = os.path.join(storage_dir, "IT_MLLM/results/inference", args.ckpt, "arc_answers.jsonl")
+    
     # Load predictions
     results = []
     for line in open(src):
