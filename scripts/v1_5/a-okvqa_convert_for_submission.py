@@ -3,9 +3,10 @@ import re
 import argparse
 
 parser = argparse.ArgumentParser(description='Process JSONL file and output JSON.')
-parser.add_argument('--input_file', type=str, default='/storage1/chenguangwang/Active/vision_share/dataset/eval/vizwiz/answers/vicuna-7b-projector-vicuna_v1-conv.jsonl')
-parser.add_argument('--output_file', type=str, default='answers_upload/vizwiz_predictions_vicuna-7b-projector-vicuna_v1-conv.json')
+parser.add_argument('--input_file', type=str, default='/storage1/chenguangwang/Active/vision_share/dataset/eval/a-okvqa/aokvqa_v1p0_val.json')
+parser.add_argument('--output_file', type=str, default='/storage1/chenguangwang/Active/vision_share/dataset/eval/a-okvqa/aokvqa_val.jsonl')
 args = parser.parse_args()
+
 input_file = args.input_file
 output_file = args.output_file
 

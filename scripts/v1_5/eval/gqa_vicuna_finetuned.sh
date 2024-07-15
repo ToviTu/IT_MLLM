@@ -35,7 +35,10 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
     cat ${EVAL_DIR}/gqa/answers/$SPLIT/$CKPT/${CHUNKS}_${IDX}.jsonl >> "$output_file"
 done
 
-python ${WORKING_DIR}/scripts/convert_gqa_for_eval.py --src $output_file --dst $GQADIR/testdev_balanced_predictions_llava-vicuna-7b-lit-plain-conv.json
+# Parse and evaluate
+python $WORKING_DIR/scripts/v1_5/gqa_parse_and_evaluate.py \
+    --input_file ${output_file} \
+    --output_file $GQADIR/testdev_balanced_predictions.json
 
-#cd $GQADIR
-#python ${EVAL_DIR}/gqa/data/1_eval.py --tier testdev_balanced
+cd $GQADIR
+python ${EVAL_DIR}/gqa/data/1_eval.py --tier testdev_balanced

@@ -2,6 +2,13 @@
 
 CKPT="llava-llama2-7b-lit_plain-conv-val"
 
+# Prepare dataset from original a-okvqa json file
+python ${WORKING_DIR}/scripts/v1_5/a-okvqa_convert_for_submission.py \
+    --input_file ${EVAL_DIR}/a-okvqa/aokvqa_v1p0_val.json \
+    --output_file ${EVAL_DIR}/a-okvqa/aokvqa_val.jsonl \
+    --prompt ''
+
+# Start Inference
 python -m llava.eval.model_vqa_loader \
     --model-path /storage1/chenguangwang/Active/vision_share/models/llava-llama2-7b-lit \
     --question-file ${EVAL_DIR}/a-okvqa/aokvqa_val.jsonl \
@@ -10,3 +17,14 @@ python -m llava.eval.model_vqa_loader \
     --temperature 0 \
     --conv-mode plain \
     --max_new_token 256
+
+# Parse outputs and evaluate
+python a-okvqa_convert_for_submission.py \
+    --input_file ${EVAL_DIR}/a-okvqa/answers/$CKPT.jsonl \
+    --output_file ${EVAL_DIR}/a-okvqa/answers/${CKPT}_predictions.json
+
+python ${EVAL_DIR}/a-okvqa/eval_predictions.py \
+    --aokvqa-dir ${EVAL_DIR}/a-okvqa --split val \
+    --preds ${EVAL_DIR}/a-okvqa/answers/${CKPT}_predictions.json
+    
+
