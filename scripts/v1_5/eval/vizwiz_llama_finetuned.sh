@@ -1,15 +1,14 @@
 #!/bin/bash
 
-CKPT="llama-7b-projector"
+CKPT="llava-llama2-7b-lit-plain-conv"
 
 python -m llava.eval.model_vqa_loader \
-    --model-path /storage1/chenguangwang/Active/vision_share/models/llava-vicuna-7b-pretrain \
-    --model-base lmsys/vicuna-7b-v1.5 \
-    --question-file ${EVAL_DIR}/vizwiz/llava_test.jsonl \
+    --model-path /storage1/chenguangwang/Active/vision_share/models/llava-llama2-7b-lit \
+    --question-file ${EVAL_DIR}/vizwiz/llava_test_new.jsonl \
     --image-folder ${EVAL_DIR}/vizwiz/test \
     --answers-file ${EVAL_DIR}/vizwiz/answers/$CKPT.jsonl \
     --temperature 0 \
-    --conv-mode vicuna_v1
+    --conv-mode plain
 
 python ${WORKING_DIR}/scripts/convert_vizwiz_for_submission.py \
     --annotation-file ${EVAL_DIR}/vizwiz/llava_test.jsonl \

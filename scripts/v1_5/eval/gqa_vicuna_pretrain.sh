@@ -1,18 +1,19 @@
 #!/bin/bash
 
-
 gpu_list="${CUDA_VISIBLE_DEVICES:-0}"
 IFS=',' read -ra GPULIST <<< "$gpu_list"
 
 CHUNKS=${#GPULIST[@]}
 
-CKPT="llava-v1.5-7b"
+CKPT="vicuna-7b"
 SPLIT="llava_gqa_testdev_balanced"
+
 GQADIR="${EVAL_DIR}/gqa/data"
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
-        --model-path liuhaotian/llava-v1.5-7b \
+        --model-path /storage1/chenguangwang/Active/vision_share/models/llava-vicuna-7b-pretrain \
+        --model-base lmsys/vicuna-7b-v1.5 \
         --question-file ${EVAL_DIR}/gqa/$SPLIT.jsonl \
         --image-folder ${EVAL_DIR}/gqa/data/images \
         --answers-file ${EVAL_DIR}/gqa/answers/$SPLIT/$CKPT/${CHUNKS}_${IDX}.jsonl \
@@ -34,7 +35,7 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
     cat ${EVAL_DIR}/gqa/answers/$SPLIT/$CKPT/${CHUNKS}_${IDX}.jsonl >> "$output_file"
 done
 
-python ${WORKING_DIR}/scripts/convert_gqa_for_eval.py --src $output_file --dst $GQADIR/testdev_balanced_predictions.json
+python ${WORKING_DIR}/scripts/convert_gqa_for_eval.py --src $output_file --dst $GQADIR/testdev_balanced_predictions_vicuna.json
 
 cd $GQADIR
-python ${EVAL_DIR}/gqa/data/1_eval.py --tier testdev_balanced
+python ${EVAL_DIR}/gqa/data/1_eval.py --tier testdev_balanced_vicuna

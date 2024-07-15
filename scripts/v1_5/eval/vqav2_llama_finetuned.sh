@@ -5,20 +5,20 @@ IFS=',' read -ra GPULIST <<< "$gpu_list"
 
 CHUNKS=${#GPULIST[@]}
 
-CKPT="llama-7b-projector"
+CKPT="llava-llama2-7b-lit-plain-conv"
 SPLIT="llava_vqav2_mscoco_test-dev2015"
+#SPLIT="test_200_lines"
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
-        --model-path /storage1/chenguangwang/Active/vision_share/models/llava-llama2-7b-pretrain \
-        --model-base meta-llama/Llama-2-7b-hf \
+        --model-path /storage1/chenguangwang/Active/vision_share/models/llava-llama2-7b-lit \
         --question-file ${EVAL_DIR}/vqav2/$SPLIT.jsonl \
         --image-folder ${EVAL_DIR}/vqav2/test2015 \
         --answers-file ${EVAL_DIR}/vqav2/answers/$SPLIT/$CKPT/${CHUNKS}_${IDX}.jsonl \
         --num-chunks $CHUNKS \
         --chunk-idx $IDX \
         --temperature 0 \
-        --conv-mode llama_2 &
+        --conv-mode plain &
 done
 
 wait
@@ -33,5 +33,5 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
     cat ${EVAL_DIR}/vqav2/answers/$SPLIT/$CKPT/${CHUNKS}_${IDX}.jsonl >> "$output_file"
 done
 
--
+python ${WORKING_DIR}/scripts/convert_vqav2_for_submission.py --dir ${EVAL_DIR}/vqav2 --split $SPLIT --ckpt $CKPT
 
