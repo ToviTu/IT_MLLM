@@ -33,7 +33,7 @@ For cosmosqa dataset, go to llava/eval directory and run the following command:
 
 2. Evaluation
 Go to llava/eval and run the following command
-```CUDA_VISIBLE_DEVICES=3 python cosmosqa_evaluator.py --ckpt llava-vicuna-7b-pretrain```
+```CUDA_VISIBLE_DEVICES=0 python cosmosqa_evaluator.py --ckpt llava-vicuna-7b-pretrain```
 
 
 #### for llama model 

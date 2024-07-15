@@ -44,22 +44,37 @@ EVAL_DIR="${STORAGE_DIR}/dataset/eval"
 # unzip -d $EVAL_DIR/vqav2 ${EVAL_DIR}/vqav2/test2015.zip
 
 # Download GQA (More than 20 GB)
-# mkdir -p $EVAL_DIR/gqa/data
-# wget -P $EVAL_DIR/gqa/data  https://downloads.cs.stanford.edu/nlp/data/gqa/sceneGraphs.zip -O "$EVAL_DIR/gqa/data/sceneGraphs.zip"
-# wget -P $EVAL_DIR/gqa/data  https://downloads.cs.stanford.edu/nlp/data/gqa/questions1.2.zip -O "$EVAL_DIR/gqa/data/questions1.2.zip"
-# wget -P $EVAL_DIR/gqa/data  https://downloads.cs.stanford.edu/nlp/data/gqa/images.zip -O "$EVAL_DIR/gqa/data/images.zip"
-# wget -P $EVAL_DIR/gqa/data  https://nlp.stanford.edu/data/gqa/eval.zip -O "$EVAL_DIR/gqa/data/eval.zip"
+cd $EVAL_DIR/gqa
+mkdir -p data/
+cd ${WORKING_DIR}
+wget -P $EVAL_DIR/gqa/data  --no-check-certificate https://downloads.cs.stanford.edu/nlp/data/gqa/sceneGraphs.zip -O "$EVAL_DIR/gqa/data/sceneGraphs.zip"
+wget -P $EVAL_DIR/gqa/data  --no-check-certificate https://downloads.cs.stanford.edu/nlp/data/gqa/questions1.2.zip -O "$EVAL_DIR/gqa/data/questions1.2.zip"
+wget -P $EVAL_DIR/gqa/data  --no-check-certificate https://downloads.cs.stanford.edu/nlp/data/gqa/images.zip -O "$EVAL_DIR/gqa/data/images.zip"
+wget -P $EVAL_DIR/gqa/data  --no-check-certificate https://nlp.stanford.edu/data/gqa/eval.zip -O "$EVAL_DIR/gqa/data/eval.zip"
 
-# unzip -d $EVAL_DIR/gqa/data ${EVAL_DIR}/gqa/data/sceneGraphs.zip
-# unzip -d $EVAL_DIR/gqa/data ${EVAL_DIR}/gqa/data/questions1.2.zip
-# unzip -d $EVAL_DIR/gqa/data ${EVAL_DIR}/gqa/data/images.zip
-# unzip -d $EVAL_DIR/gqa/data ${EVAL_DIR}/gqa/data/eval.zip
+unzip -d $EVAL_DIR/gqa/data ${EVAL_DIR}/gqa/data/sceneGraphs.zip
+unzip -d $EVAL_DIR/gqa/data ${EVAL_DIR}/gqa/data/questions1.2.zip
+unzip -d $EVAL_DIR/gqa/data ${EVAL_DIR}/gqa/data/images.zip
+unzip -d $EVAL_DIR/gqa/data ${EVAL_DIR}/gqa/data/eval.zip
 
 # Download VisWiz 
 # wget -P $EVAL_DIR/vizwiz --no-check-certificate https://vizwiz.cs.colorado.edu/VizWiz_final/vqa_data/Annotations.zip -O "$EVAL_DIR/vizwiz/Annotations.zip"
 # wget -P $EVAL_DIR/vizwiz --no-check-certificate https://vizwiz.cs.colorado.edu/VizWiz_final/images/test.zip -O "$EVAL_DIR/vizwiz/test.zip"
 # unzip -d $EVAL_DIR/vizwiz ${EVAL_DIR}/vizwiz/Annotations.zip
 # unzip -d $EVAL_DIR/vizwiz ${EVAL_DIR}/vizwiz/test.zip
+
+# Download A-OKVQA and COCO 2017
+cd $EVAL_DIR
+mkdir -p a-okvqa/images
+cd ${WORKING_DIR}
+# wget -P $EVAL_DIR/a-okvqa https://prior-datasets.s3.us-east-2.amazonaws.com/aokvqa/aokvqa_v1p0.tar.gz
+# tar -xzvf aokvqa_v1p0.tar.gz
+# for split in train val test; do
+#     wget "http://images.cocodataset.org/zips/${split}2017.zip"
+#     unzip "${split}2017.zip" -d ${EVAL_DIR}/a-okvqa/images; rm "${split}2017.zip"
+# done
+wget http://images.cocodataset.org/annotations/annotations_trainval2017.zip
+unzip annotations_trainval2017.zip -d ${EVAL_DIR}/a-okvqa/images; rm annotations_trainval2017.zip
 
 
 # Download ScienceQA --> image doesn't exist in the git repo

@@ -4,14 +4,26 @@
 CUDA_VISIBLE_DEVICES=2 python model_ARC_loader.py --model-path /scratch/vision_share/models/llava-vicuna-7b-pretrain --model-base lmsys/vicuna-7b-v1.5 
 
 # code for evaluation
-CUDA_VISIBLE_DEVICES=3 python ARC_evaluator.py --ckpt llava-vicuna-7b-pretrain 
+CUDA_VISIBLE_DEVICES=3 python ARC_evaluator.py --ckpt llava-vicuna-7b-pretrain
 
 ## llava-llama2-7b-pretrain
-CUDA_VISIBLE_DEVICES=3 python model_ARC_loader.py --model-path /scratch/vision_share/models/llava-llama2-7b-pretrain --model-base meta-llama/Llama-2-7b-hf
+CUDA_VISIBLE_DEVICES=7 python model_ARC_loader.py --model-path /scratch/vision_share/llava-llama2-7b-pretrain --model-base meta-llama/Llama-2-7b-hf 
 
 # code for evaluation
 CUDA_VISIBLE_DEVICES=3 python ARC_evaluator.py --ckpt llava-llama2-7b-pretrain
 
+# pure llama2
+CUDA_VISIBLE_DEVICES=7 python model_ARC_loader.py --model-path meta-llama/Llama-2-7b-hf 
+
+# llava-vicuna-7b-lit
+CUDA_VISIBLE_DEVICES=5 python model_ARC_loader.py --model-path /storage1/chenguangwang/Active/vision_share/models/llava-vicuna-7b-lit
+
+CUDA_VISIBLE_DEVICES=4 python ARC_evaluator.py --ckpt llava-vicuna-7b-lit
+
+# llava-llama2-7b-lit   
+CUDA_VISIBLE_DEVICES=6 python model_ARC_loader.py --model-path /storage1/chenguangwang/Active/vision_share/models/llava-llama2-7b-lit 
+
+CUDA_VISIBLE_DEVICES=4 python ARC_evaluator.py --ckpt llava-llama2-7b-lit 
 
 #commonsense_qa
 # code for inferencing
@@ -37,7 +49,7 @@ CUDA_VISIBLE_DEVICES=2 python model_cosmosqa_loader.py --model-path /scratch/vis
 CUDA_VISIBLE_DEVICES=3 python cosmosqa_evaluator.py --ckpt llava-vicuna-7b-pretrain
 
 ## llava-llama2-7b-pretrain
-CUDA_VISIBLE_DEVICES=3 python model_cosmosqa_loader.py --model-path /scratch/vision_share/models/llava-llama2-7b-pretrain --model-base meta-llama/Llama-2-7b-hf
+CUDA_VISIBLE_DEVICES=1 python model_cosmosqa_loader.py --model-path /scratch/vision_share/models/llava-llama2-7b-pretrain --model-base meta-llama/Llama-2-7b-hf
 
 #strategy_qa
 # code for inferencing

@@ -50,10 +50,18 @@ class CosmosQADataset(Dataset):
 
         prompt = f"Context: {context}\nQuestion: {question}\nOptions: {', '.join(options_with_labels)}\nAnswer with the option's letter from the given choices directly."
 
-        conv = conv_templates[args.conv_mode].copy()
-        conv.append_message(conv.roles[0], prompt)
-        conv.append_message(conv.roles[1], None)
-        final_prompt = conv.get_prompt()
+        if args.model_base == None or args.model_base == "lmsys/vicuna-7b-v1.5":
+            conv = conv_templates[args.conv_mode].copy()
+            conv.append_message(conv.roles[0], prompt)
+            conv.append_message(conv.roles[1], None)
+            final_prompt = conv.get_prompt()
+        if args.model_base == "meta-llama/Llama-2-7b-hf":
+            conv = conv_templates[args.conv_mode].copy()
+            conv.append_message(conv.roles[0], "<s>{{ " + prompt + " }}") 
+            conv.append_message(conv.roles[1], None)  
+            final_prompt = conv.get_prompt()
+            
+        print(final_prompt)
         
         input_ids = self.tokenizer(final_prompt, return_tensors='pt').input_ids
 
