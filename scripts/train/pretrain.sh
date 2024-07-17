@@ -16,24 +16,24 @@ deepspeed --master_port=7000 \
     --data_path ${STORAGE_DIR}/datasets/llava/blip_laion_cc_sbu_558k.json \
     --image_folder ${STORAGE_DIR}/datasets/llava/images \
     --vision_tower openai/clip-vit-large-patch14-336 \
-    --mm_projector_type linear \
-    --freeze_backbone False \
+    --mm_projector_type mlp2x_gelu \
+    --freeze_backbone True \
     --freeze_vision_tower True \
     --freeze_mm_mlp_adapter False \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
     --bf16 True \
-    --output_dir ${STORAGE_DIR}/models/llava-vicuna-7b-pretrain-full \
+    --output_dir ${STORAGE_DIR}/models/llava-vicuna-7b-pretrain-fb \
     --num_train_epochs 1 \
     --per_device_train_batch_size 32 \
     --per_device_eval_batch_size 4 \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
-    --save_steps 200 \
+    --save_steps 10000 \
     --save_total_limit 1 \
-    --learning_rate 5e-5 \
+    --learning_rate 1e-3 \
     --weight_decay 0. \
     --warmup_ratio 0.03 \
     --lr_scheduler_type "cosine" \
