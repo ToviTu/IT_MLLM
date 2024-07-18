@@ -264,6 +264,17 @@ If a question does not make any sense, or is not factually coherent, explain why
     sep2="</s>",
 )
 
+conv_llama_2_plain = Conversation(
+    system="", # No system prompt
+    roles=("USER", "ASSISTANT"),
+    version="llama_v2",
+    messages=(),
+    offset=0,
+    sep_style=SeparatorStyle.LLAMA_2,
+    sep="<s>",
+    sep2="</s>",
+)
+
 conv_llava_llama_2 = Conversation(
     system="You are a helpful language and vision assistant. "
            "You are able to understand the visual content that the user provides, "

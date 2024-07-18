@@ -914,15 +914,18 @@ def train(attn_implementation=None):
         #model.requires_grad_(False)
 
         if model.config.freeze_vision_tower:
-            model.get_vision_tower().requires_grad_(False)
+            for p in model.get_vision_tower().parameters():
+                p.requires_grad_(False)
         
         if model.config.freeze_mm_mlp_adapter:
-            model.get_model().mm_projector.requires_grad_(False)
+            for p in model.get_model().mm_projector.parameters():
+                p.requires_grad_(False)
             
         if model.config.freeze_backbone:
             model.model.layers.requires_grad_(False)
             model.model.embed_tokens.requires_grad_(False)
             model.model.norm.requires_grad_(False)
+            model.lm_head.requires_grad_(False)
 
         if training_args.bits in [4, 8]:
             model.get_model().mm_projector.to(dtype=compute_dtype, device=training_args.device)

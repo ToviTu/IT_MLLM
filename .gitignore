@@ -8,10 +8,7 @@ wandb/
 *run_interactive_pod.sh
 
 # Ignore environment variable setup script
-sh/set_environ_var.sh
-
-# Ignore secrets setup script
-sh/set_secrets.sh
+sh/
 
 # Ignore interactive pod script
 apptainer/run_interactive_pod.sh
@@ -185,3 +182,4 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+sh/set_environ_var.sh
