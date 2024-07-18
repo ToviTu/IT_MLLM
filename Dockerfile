@@ -63,4 +63,4 @@ RUN pip install flash-attn --no-build-isolation
 # Install lm-eval
 RUN pip install git+https://github.com/ToviTu/lm-evaluation-harness.git@main
 # Install lmm-eval
-RUN pip install git+https://github.com/ToviTu/lmms-eval.git@main
+RUN pip install git+https://github.com/ToviTu/lmms-eval.git@llava_plain
