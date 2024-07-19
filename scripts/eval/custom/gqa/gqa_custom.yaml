@@ -1,0 +1,13 @@
+group: gqa_custom
+task: gqa_custom
+include: gqa.yaml
+filter_list:
+  - name: "score-first"
+    filter: 
+      - function: "regex"
+        regex_pattern: 'answer is: (.*?)\.'
+      - function: "take_first"
+      - function: "map"
+        mapping_dict: 
+          "True": "yes"
+          "False": "no"
