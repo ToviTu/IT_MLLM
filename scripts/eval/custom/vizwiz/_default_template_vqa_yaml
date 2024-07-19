@@ -4,13 +4,23 @@ doc_to_visual: !function utils.vizwiz_vqa_doc_to_visual
 doc_to_text: !function utils.vizwiz_vqa_doc_to_text
 doc_to_target: "answer"
 generation_kwargs:
+  max_new_tokens: 20
+  do_sample: False
   until:
-    - "ASSISTANT:"
-    - "USER:"
+    - "Assistant:"
+    - "User:"
+    - "\""
+    - "\n"
 metadata:
   - version: 0.0
+filter_list:
+  - name: "strict-match"
+    filter:
+      - function: "regex"
+        regex_pattern: "(.*)\""
+      - function: "take_first"
 model_specific_prompt_kwargs:
   default:
-    pre_prompt: "USER: "
-    post_prompt: " ASSISTANT: The answer is "
+    pre_prompt: "User: "
+    post_prompt: " Replay with \"Unanswerable\", if you do not know.\nAssistant: The answer is \""
 process_results: !function utils.vizwiz_vqa_process_results
