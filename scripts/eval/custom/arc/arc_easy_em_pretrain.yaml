@@ -1,0 +1,34 @@
+dataset_name: ARC-Easy
+dataset_path: ai2_arc
+task: arc_easy_pretrain
+description: ''
+doc_to_decontamination_query: 'Question: {{question}}\nAnswer:'
+doc_to_target: '{{answerKey}}'
+doc_to_text: !function helper.arc_prompt
+fewshot_delimiter: \n\n
+generation_kwargs:
+  until:
+  - 'User:'
+  - '"'
+  - ':'
+group:
+- ai2_arc
+metadata:
+  version: 1.0
+metric_list:
+- aggregation: mean
+  higher_is_better: true
+  ignore_case: true
+  metric: exact_match
+num_fewshot: 0
+output_type: generate_until
+repeats: 1
+should_decontaminate: false
+target_delimiter: ' '
+test_split: test
+training_split: train
+validation_split: validation
+filter_list:
+  - name: "custom_filter_pipeline"
+    filter:
+      - function: answermapping

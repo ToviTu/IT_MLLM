@@ -63,14 +63,11 @@ if __name__ == '__main__':
     arc_train = get_llava_train(ARC, os.path.join(os.environ['STORAGE_DIR'], "results/anno/Yi_ARC_rationale.json"))
 
     sizes = [len(squad_train), len(strategyqa_train), len(commonsenseqa_train), len(cosmosqa_train), len(arc_train)]
-    probs = sampling_prob(sizes)
+    probs = np.ones(len(sizes)) / len(sizes)
     datasets = [squad_train, strategyqa_train, commonsenseqa_train, cosmosqa_train, arc_train]
     data = sample_from_list(datasets, probs, size)
     data = format_llava_train(data)
 
-    #print(data[0])
-    #print(len(data))
-
-    with open(os.path.join(os.environ['STORAGE_DIR'], "datasets/llava/Yi_llava_train.json"), 'w') as f:
+    with open(os.path.join(os.environ['STORAGE_DIR'], "datasets/llava/Yi_llava_train_balanced.json"), 'w') as f:
         json.dump(data, f)
 

@@ -6,9 +6,10 @@ export MASTER_PORT=61000
 export DS_SKIP_CUDA_CHECK=1
 
 #lr was 1e-3
-
+# Ensure per_device_train_batch_size*num_devices*gradient_accumulation_steps is 256
+ 
 deepspeed --master_port=7000 \
-    --include=localhost:0,1,2,3,4,5,6,7 \
+    --include=localhost:0,1,2,3 \
     ${WORKING_DIR}/llava/train/train_mem.py \
     --deepspeed ${WORKING_DIR}/scripts/config/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
@@ -26,7 +27,7 @@ deepspeed --master_port=7000 \
     --bf16 True \
     --output_dir ${STORAGE_DIR}/models/llava-vicuna-7b-pretrain-fb \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 32 \
+    --per_device_train_batch_size 64 \
     --per_device_eval_batch_size 4 \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \

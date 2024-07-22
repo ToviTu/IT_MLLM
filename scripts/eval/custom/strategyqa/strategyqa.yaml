@@ -1,0 +1,18 @@
+task: strategyqa_custom
+dataset_path: ChilleD/StrategyQA
+dataset_name: null
+output_type: multiple_choice
+training_split: train
+#validation_split: validation
+test_split: test
+doc_to_text: "Question: {{question}}\nAnswer:"
+doc_to_target: !function helper.label_to_index
+doc_to_choice: ["false", "true"]
+should_decontaminate: false
+doc_to_decontamination_query: "Question: {{question}}\nAnswer:"
+metric_list:
+  - metric: acc
+    aggregation: mean
+    higher_is_better: true
+metadata:
+  version: 1.0

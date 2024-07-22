@@ -7,19 +7,18 @@ export MASTER_PORT=61000
 # Unknown offloading error
 export DS_SKIP_CUDA_CHECK=1
 
-#     --pretrain_mm_mlp_adapter ${STORAGE_DIR}/models/llava-llama2-7b-pretrain/mm_projector.bin \
-
+# --pretrain_mm_mlp_adapter ${STORAGE_DIR}/models/llava-llama2-7b-pretrain/mm_projector.bin \
 
 deepspeed --master_port=6100 \
-    --include=localhost:0,1,2,3,4,5,6,7  \
+    --include=localhost:0,1,2,3 \
     ${WORKING_DIR}/llava/train/train_mem.py \
     --deepspeed ${WORKING_DIR}/scripts/config/zero3.json \
-    --model_name_or_path ${STORAGE_DIR}/models/llava-vicuna-7b-pretrain-full \
+    --model_name_or_path ${STORAGE_DIR}/models/llava-llama2-7b-pretrain-fb \
     --version v1 \
-    --data_path ${STORAGE_DIR}/datasets/llava/Yi_llava_train.json \
+    --data_path ${STORAGE_DIR}/datasets/llava/Yi_llava_train_flan.json \
     --image_folder ${STORAGE_DIR}/datasets/llava/images \
     --vision_tower openai/clip-vit-large-patch14-336 \
-    --mm_projector_type linear \
+    --mm_projector_type mlp2x_gelu \
     --freeze_backbone False \
     --freeze_vision_tower True \
     --freeze_mm_mlp_adapter True \
@@ -29,14 +28,14 @@ deepspeed --master_port=6100 \
     --image_aspect_ratio pad \
     --group_by_modality_length True \
     --bf16 True \
-    --output_dir ${STORAGE_DIR}/models/llava-vicuna-7b-lit-full \
-    --num_train_epochs 1 \
-    --per_device_train_batch_size 16 \
+    --output_dir ${STORAGE_DIR}/models/llava-llama2-7b-lit-flan\
+    --num_train_epochs 2 \
+    --per_device_train_batch_size 32 \
     --per_device_eval_batch_size 4 \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
-    --save_steps 500 \
+    --save_steps 10000 \
     --save_total_limit 1 \
     --learning_rate 2e-5 \
     --weight_decay 0. \

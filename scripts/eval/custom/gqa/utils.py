@@ -18,19 +18,34 @@ def gqa_doc_to_visual(doc):
 
 
 def gqa_doc_to_text(doc, model_specific_prompt_kwargs):
-    # question = doc["question"]
-    # pre_prompt = model_specific_prompt_kwargs["pre_prompt"]
-    # post_prompt = model_specific_prompt_kwargs["post_prompt"]
     question = doc["question"]
     pattern = r'^(Is|Are|Am|Was|Were|Do|Does|Did|Has|Have|Had|Will|Would|Can|Could)\s'
     regex = re.compile(pattern, re.IGNORECASE) 
     if regex.match(question):
-        pre_prompt = ""
-        post_prompt = "\nAnswer the question using Yes or No."
+        pre_prompt = model_specific_prompt_kwargs["pre_prompt"]
+        post_prompt = model_specific_prompt_kwargs['post_prompt']
         prompt = f"{pre_prompt}{question}{post_prompt}"
     else:
-        pre_prompt = ""
-        post_prompt = "\nAnswer the question using a single word or phrase."
+        pre_prompt = model_specific_prompt_kwargs["pre_prompt"]
+        post_prompt = model_specific_prompt_kwargs['post_prompt']
         prompt = f"{pre_prompt}{question}{post_prompt}"
 
     return prompt
+
+# def gqa_doc_to_text(doc, model_specific_prompt_kwargs):
+#     # question = doc["question"]
+#     # pre_prompt = model_specific_prompt_kwargs["pre_prompt"]
+#     # post_prompt = model_specific_prompt_kwargs["post_prompt"]
+#     question = doc["question"]
+#     pattern = r'^(Is|Are|Am|Was|Were|Do|Does|Did|Has|Have|Had|Will|Would|Can|Could)\s'
+#     regex = re.compile(pattern, re.IGNORECASE) 
+#     if regex.match(question):
+#         pre_prompt = ""
+#         post_prompt = "\nAnswer the question using Yes or No."
+#         prompt = f"{pre_prompt}{question}{post_prompt}"
+#     else:
+#         pre_prompt = ""
+#         post_prompt = "\nAnswer the question using a single word or phrase."
+#         prompt = f"{pre_prompt}{question}{post_prompt}"
+
+#     return prompt

@@ -1,0 +1,29 @@
+task: commonsenseqa_pretrain
+dataset_path: commonsense_qa
+dataset_name: null
+group:
+- commonsense_qa_custom
+output_type: generate_until
+training_split: train
+validation_split: validation
+#test_split: test
+doc_to_text: !function helper.prompt
+doc_to_target: "{{answerKey}}"
+generation_kwargs:
+  until:
+  - 'User:'
+  - '"'
+  - ':'
+should_decontaminate: false
+doc_to_decontamination_query: "Question: {{question}}\nAnswer:"
+metric_list:
+- aggregation: mean
+  higher_is_better: true
+  ignore_case: true
+  metric: exact_match
+filter_list:
+  - name: "custom_filter_pipeline"
+    filter:
+      - function: answermapping
+metadata:
+  version: 1.0

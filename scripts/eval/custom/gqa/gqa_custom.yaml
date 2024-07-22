@@ -1,13 +1,36 @@
-group: gqa_custom
-task: gqa_custom
-include: gqa.yaml
+dataset_path: lmms-lab/GQA
+dataset_name: testdev_balanced_instructions
+dataset_kwargs:
+  token: True
+task: "gqa_custom"
+test_split: testdev
+output_type: generate_until
+doc_to_visual: !function utils.gqa_doc_to_visual
+doc_to_text: !function utils.gqa_doc_to_text
+doc_to_target: "answer"
+generation_kwargs:
+  max_new_tokens: 16
+  temperature: 0
+  top_p: 1.0
+  num_beams: 1
+  do_sample: false
+  until:
+    - "\""
+metric_list:
+  - metric: exact_match
+    aggregation: mean
+    higher_is_better: true
+    ignore_case: true
+    ignore_punctuation: true
+metadata:
+  - version: 0.0
+model_specific_prompt_kwargs:
+  default:
+    pre_prompt: "User: "
+    post_prompt: "\nAssistant: The best answer is \""
 filter_list:
-  - name: "score-first"
-    filter: 
+  - name: "strict-match"
+    filter:
       - function: "regex"
-        regex_pattern: 'answer is: (.*?)\.'
+        regex_pattern: "(.*)[\\n|\"]"
       - function: "take_first"
-      - function: "map"
-        mapping_dict: 
-          "True": "yes"
-          "False": "no"
