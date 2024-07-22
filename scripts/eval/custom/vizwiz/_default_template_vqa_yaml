@@ -22,5 +22,5 @@ filter_list:
 model_specific_prompt_kwargs:
   default:
     pre_prompt: "User: "
-    post_prompt: " Replay with \"Unanswerable\", if you do not know.\nAssistant: The answer is \""
+    post_prompt: " Reply with \"Unanswerable\", if you do not know.\nAssistant: The answer is \""
 process_results: !function utils.vizwiz_vqa_process_results
