@@ -1,0 +1,10 @@
+group: ok_vqa_finetuned
+task: ok_vqa_val2014_finetuned
+include: _default_template_vqa_yaml
+test_split: val2014
+filter_list:
+  - name: "score-first"
+    filter: 
+      - function: "regex"
+        regex_pattern: 'answer is: (.*?)\.'
+      - function: "take_first"

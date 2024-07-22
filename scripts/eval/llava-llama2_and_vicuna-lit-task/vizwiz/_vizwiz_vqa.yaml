@@ -1,0 +1,4 @@
+group: vizwiz_vqa_custom
+task:
+- vizwiz_vqa_val_custom
+- vizwiz_vqa_test_custom

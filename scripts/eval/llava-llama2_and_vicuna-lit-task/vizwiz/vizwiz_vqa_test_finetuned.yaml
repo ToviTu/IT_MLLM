@@ -1,0 +1,9 @@
+group: vizwiz_vqa_finetuned
+task: vizwiz_vqa_test_finetuned
+test_split: test
+include: _default_template_vqa_yaml
+process_results: !function utils.vizwiz_vqa_process_results
+metric_list:
+  - metric: submission
+    aggregation: !function utils.vizwiz_vqa_aggregate_submissions
+    higher_is_better: true
