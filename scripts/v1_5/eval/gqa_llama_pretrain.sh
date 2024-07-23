@@ -5,7 +5,7 @@ IFS=',' read -ra GPULIST <<< "$gpu_list"
 
 CHUNKS=${#GPULIST[@]}
 
-CKPT="llama-7b-pretrain-plain-conv-200"
+CKPT="llama-7b-pretrain-plain-conv-200-quotes"
 #SPLIT="llava_gqa_testdev_balanced"
 SPLIT="llava_gqa_200_lines"
 
@@ -13,7 +13,7 @@ GQADIR="${EVAL_DIR}/gqa/data"
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python -m llava.eval.model_vqa_loader \
-        --model-path /storage1/chenguangwang/Active/vision_share/models/llava-llama2-7b-pretrain \
+        --model-path /scratch/vision_share/models/llava-llama2-7b-pretrain \
         --model-base meta-llama/Llama-2-7b-hf \
         --question-file ${EVAL_DIR}/gqa/$SPLIT.jsonl \
         --image-folder ${EVAL_DIR}/gqa/data/images \
