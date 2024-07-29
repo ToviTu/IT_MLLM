@@ -1,5 +1,5 @@
 from datasets import load_dataset, load_metric
-from llava.anno.prompt_template import llava_cqa, llava_cmc, fa_prompt
+from llava.anno.prompt_template import llava_cqa, llava_cmc, fa_prompt, llava_srq, llava_tfq
 import json
 import numpy as np
 import csv
@@ -11,6 +11,8 @@ import random
 
 DATA_DIR = os.environ["HF_DATASETS_CACHE"]
 
+bool_mapper = lambda answer: "yes" if answer else "no"
+
 class DatasetFactory:
 
     def __init__(self, train_set, val_set):
@@ -20,24 +22,22 @@ class DatasetFactory:
 
         assert "question" in self.train_set[0] and "answer" in self.train_set[0], "Expect question and answer columns in the dataset"
 
-    def format_input(self, context="", question="", choices="", answer="", template=llava_cqa, prefix='', suffix=''):
+    def format_input(self, context="", question="", choices="", answer="", template=llava_srq, prefix='', suffix=''):
         '''
         Format the input for the model
         '''
+        final_answer = answer.split(" ")[-1]
+
         if choices:
             formatted_input = prefix + llava_cmc(context, choices, question, answer) + suffix
+        elif "yes" in final_answer or "no" in final_answer:
+            formatted_input = prefix + llava_tfq(context, question, answer) + suffix
         else:
             formatted_input = prefix + template(context, question, answer) + suffix
         return formatted_input
     
     def add_rationale(self, rationale):
         self.rationale = rationale
-
-    # def format_input_with_rationale(self, context="", question="", choices="", answer="", rationale="", template=llava_cqa, prefix='', suffix=''):
-    #     if choices:
-    #         return prefix + template(context, choices, question, answer + '\n' + rationale) + suffix
-    #     else:
-    #         return prefix + template(context, question, answer + '\n' + rationale) + suffix
     
     def format_input_with_cot_example(self, eos_token, instruction, cot_prompts, cqa_template, cqa):
 
@@ -91,7 +91,7 @@ class DatasetFactory:
             
         return map(mapping_func, data)
         
-    def process_with_rationale(self, rationale=None, template=llava_cqa, instruction=''):
+    def process_with_rationale(self, rationale=None, template=llava_srq, instruction=''):
         mapping_func = lambda example, rationale: {
                 'id': example['id'],
                 'finputs': self.format_input(
@@ -187,10 +187,12 @@ class StrategyQA(DatasetFactory):
             data = json.load(f)
         train_set = data
 
+
         preprocess = lambda instance: {
             'id': instance['qid'],
             'question': instance['question'],
-            'answer': str(instance['answer']),
+            'context': " ".join(instance['facts']),
+            'answer': bool_mapper(instance['answer']),
         }
         train_set = list(map(preprocess, train_set))
         super().__init__(train_set, [])
@@ -289,10 +291,103 @@ class ARC(DatasetFactory):
         for entry in data:
             fentry = {}
             fentry['id'] = entry['id']
-            fentry['question'] = entry['question']['stem']
+            fentry['question'] = entry['question']['stem'] + "..." if entry['question']['stem'][-1] != '?' else entry['question']['stem']
             choices = [choice['label']+ " " + choice['text'] for choice in entry['question']['choices']]
             fentry['choices'] = choices
             fentry['answer'] = entry['answerKey']
             train_set.append(fentry)
         
         super().__init__(train_set, [])
+
+class VQAv2(DatasetFactory):
+    
+    def __init__(self):
+        data = load_dataset("Multimodal-Fatima/VQAv2_train", split="train[:20000]")
+        train_set = data
+
+        preprocess = lambda instance: {
+            'id': str(instance['question_id']),
+            'image': instance['image'],
+            'image_id': instance['id_image'],
+            'question': instance['question'],
+            'answer': instance['multiple_choice_answer'],
+        }
+        
+        train_set = list(map(preprocess, train_set))
+        val_set = []
+
+        super().__init__(train_set, val_set)
+    
+    def process_with_rationale(self, rationale=None, template=llava_srq, instruction='', output_dir=None):
+        mapping_func = lambda example, rationale: {
+                'id': example['id'],
+                'finputs': self.format_input(
+                    context=example['context'] if 'context' in example else "", 
+                    question="<image>\n"+example['question'], 
+                    choices=example['choices'] if "choices" in example else "",
+                    answer=rationale + f"\n{random.choice(fa_prompt)} " + example['answer'] + ".", 
+                    template=template,
+                    prefix=instruction + '\n' if instruction else "",
+                ),
+                "image": str(example['image_id'])+".jpg",
+            }
+
+        data = []
+        for example in tqdm.tqdm(self.train_set):
+            if example['id'] not in rationale:
+                continue
+            r = rationale[example['id']]
+            data.append(mapping_func(example, r))
+            if output_dir:
+                image = example['image'].convert("RGB")
+                image.save(f"{output_dir}/{example['image_id']}.jpg")
+
+        return data
+
+class AOKvqa(DatasetFactory):
+    
+    def __init__(self):
+        data = load_dataset("HuggingFaceM4/A-OKVQA", split="train[:20000]")
+        train_set = data
+
+        mc_mapper = ['A', 'B', 'C', 'D', 'E']
+
+        preprocess = lambda instance: {
+            'id': instance['question_id'],
+            'image': instance['image'],
+            'image_id': instance['question_id'],
+            'question': instance['question'],
+            'choices': [f"{mc_mapper[i]} {choice}" for i, choice in enumerate(instance['choices'])],
+            'answer': mc_mapper[int(instance['correct_choice_idx'])],
+        }
+        
+        train_set = list(map(preprocess, train_set))
+        val_set = []
+
+        super().__init__(train_set, val_set)
+    
+    def process_with_rationale(self, rationale=None, template=llava_srq, instruction='', output_dir=None):
+        mapping_func = lambda example, rationale: {
+                'id': example['id'],
+                'finputs': self.format_input(
+                    context=example['context'] if 'context' in example else "", 
+                    question="<image>\n"+example['question'], 
+                    choices=example['choices'] if "choices" in example else "",
+                    answer=rationale + f"\n{random.choice(fa_prompt)} " + example['answer'] + ".", 
+                    template=template,
+                    prefix=instruction + '\n' if instruction else "",
+                ),
+                "image": str(example['image_id'])+".jpg",
+            }
+
+        data = []
+        for example in tqdm.tqdm(self.train_set):
+            if example['id'] not in rationale:
+                continue
+            r = rationale[example['id']]
+            data.append(mapping_func(example, r))
+            if output_dir:
+                image = example['image'].convert("RGB")
+                image.save(f"{output_dir}/{example['image_id']}.jpg")
+
+        return data
