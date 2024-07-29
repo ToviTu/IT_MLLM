@@ -3,7 +3,7 @@ import os
 import json
 import yaml
 import pathlib
-import ast
+
 import datetime
 import statistics
 
@@ -27,7 +27,7 @@ def ok_vqa_process_results(doc, result):
         gtAcc = []
 
         for i in range(len(doc["answers"])):
-            doc["answers"][i] = eval_ai_processor((doc["answers"][i]))
+            doc["answers"][i] = eval_ai_processor(doc["answers"][i])
 
         for i in range(len(doc["answers"])):
             otherGTAns = [doc["answers"][j] for j in range(len(doc["answers"])) if i != j]

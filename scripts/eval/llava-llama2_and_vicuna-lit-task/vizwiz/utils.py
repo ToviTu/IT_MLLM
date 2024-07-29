@@ -57,6 +57,23 @@ def vizwiz_vqa_doc_to_text(doc, model_specific_prompt_kwargs=None):
     text = f"{pre_prompt}{doc['question'].capitalize()}{post_prompt}"
     return text
 
+def vizwiz_vqa_doc_to_text_image_token(doc, model_specific_prompt_kwargs=None):
+    if model_specific_prompt_kwargs is None:
+        model_specific_prompt_kwargs = {}
+    pre_prompt = ""
+    post_prompt = ""
+    if "pre_prompt" in model_specific_prompt_kwargs:
+        pre_prompt = model_specific_prompt_kwargs["pre_prompt"]
+    if "post_prompt" in model_specific_prompt_kwargs:
+        post_prompt = model_specific_prompt_kwargs["post_prompt"]
+    
+    # Add image token
+    question = "<image>" + '\n' + doc['question'].capitalize()
+    text = f"{pre_prompt}{question}{post_prompt}"
+
+
+    return text
+
 
 def vizwiz_vqa_aggregate_submissions(results, args):
     now_date_time = datetime.datetime.now().strftime("%Y-%m%d-%H%M-%S")
