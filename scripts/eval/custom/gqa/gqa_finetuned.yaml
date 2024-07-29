@@ -1,0 +1,11 @@
+group: gqa_finetuned
+task: gqa_finetuned
+include: gqa.yaml
+filter_list:
+  - name: "score-first"
+    filter: 
+      - function: "regex"
+        regex_pattern: 'answer is: (.*?)\.'
+      - function: "true_false"
+      - function: "take_first"
+

@@ -1,12 +1,12 @@
 group: a-okvqa
-task: a-okvqa_val
+task: a-okvqa_val_llama_pretrain
 dataset_path: HuggingFaceM4/A-OKVQA
 test_split: validation
 output_type: generate_until
 #output_type: multiple_choice
 doc_to_visual: !function utils.aokvqa_doc_to_visual
 doc_to_text: !function utils.aokvqa_doc_to_text
-doc_to_target: "answer"
+doc_to_target: "direct_answers"
 generation_kwargs:
   until:
     - "ASSISTANT:"
@@ -16,13 +16,14 @@ metric_list:
     higher_is_better: true
     ignore_case: true
     ignore_punctuation: true
-  # - metric: submission
-  #   aggregation: !function utils.aokvqa_aggregate_submissions
-  #   higher_is_better: true
+filter_list:
+  - name: "score-first"
+    filter:
+      - function: "take_first"
 process_results: !function utils.aokvqa_process_results
 model_specific_prompt_kwargs:
   default:
-    pre_prompt: ""
-    post_prompt: "\nWhen the provided information is insufficient, respond with 'Unanswerable'.\nAnswer the question using a single word or phrase."
+    pre_prompt: "User: "
+    post_prompt: "\nAssistant: The best answer is \""
 metadata:
   - version: 0.0

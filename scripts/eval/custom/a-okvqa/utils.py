@@ -3,12 +3,13 @@ import os
 import json
 import yaml
 import pathlib
-
+import ast
 import datetime
 import statistics
 
 from lmms_eval.tasks._task_utils.file_utils import generate_submission_file
 from lmms_eval.tasks._task_utils.vqa_eval_metric import EvalAIAnswerProcessor
+from lmms_eval.filters.extraction import RegexFilter
 
 from loguru import logger as eval_logger
 
@@ -18,19 +19,26 @@ def aokvqa_doc_to_visual(doc):
 
 
 def aokvqa_process_results(doc, result):
-    eval_ai_processor = EvalAIAnswerProcessor()
-    assert len(result) == 1, f"The result should be a list of length 1, but got {len(result)}."
-    resAns = eval_ai_processor(result[0])
-    accuracy = 0
 
+    resAns = result[0]
+    accuracy = 0
+    # Filtering answer if filter not work
+    if resAns == 'A':
+        resAns = doc['choices'][0]
+    elif resAns == 'B':
+        resAns = doc['choices'][1]
+    elif resAns == 'C':
+        resAns = doc['choices'][2]
+    elif resAns == 'D':
+        resAns = doc['choices'][3]
+
+    # Compute score
     if "direct_answers" in doc and doc["direct_answers"] is not None:
         gtAcc = []
+        answer_list = ast.literal_eval(doc["direct_answers"])
 
-        for i in range(len(doc["direct_answers"])):
-            doc["direct_answers"][i] = eval_ai_processor(doc["direct_answers"][i])
-
-        for i in range(len(doc["direct_answers"])):
-            otherGTAns = [doc["direct_answers"][j] for j in range(len(doc["direct_answers"])) if i != j]
+        for i in range(len(answer_list)):
+            otherGTAns = [answer_list[j] for j in range(len(answer_list)) if i != j]
             matchingAns = [item for item in otherGTAns if item == resAns]
             acc = min(1, float(len(matchingAns)) / 3)
             gtAcc.append(acc)
@@ -72,3 +80,6 @@ def aokvqa_aggregate_submissions(results, args):
     with open(path, "w") as f:
         json.dump(results, f)
     print(f"Submission file saved to {path}")
+
+def aokvqa_doc_to_target(doc):
+    return ast.literal_eval(doc["direct_answers"])

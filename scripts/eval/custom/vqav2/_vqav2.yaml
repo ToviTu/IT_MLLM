@@ -1,0 +1,4 @@
+group: vqav2_finetuned
+task:
+- vqav2_val_finetuned
+- vqav2_test_finetuned
