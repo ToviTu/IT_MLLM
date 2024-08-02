@@ -23,13 +23,13 @@ def aokvqa_process_results(doc, result):
     resAns = result[0]
     accuracy = 0
     # Filtering answer if filter not work
-    if resAns == 'A':
+    if resAns.lower() == 'a':
         resAns = doc['choices'][0]
-    elif resAns == 'B':
+    elif resAns.lower() == 'b':
         resAns = doc['choices'][1]
-    elif resAns == 'C':
+    elif resAns.lower() == 'c':
         resAns = doc['choices'][2]
-    elif resAns == 'D':
+    elif resAns.lower() == 'd':
         resAns = doc['choices'][3]
 
     # Compute score
@@ -58,6 +58,23 @@ def aokvqa_process_results(doc, result):
 
 def aokvqa_doc_to_text(doc, model_specific_prompt_kwargs=None):
     question = doc["question"]
+    question += "\n" + f"A. {doc['choices'][0]}\n"
+    question += f"B. {doc['choices'][1]}\n"
+    question += f"C. {doc['choices'][2]}\n"
+    question += f"D. {doc['choices'][3]}"
+    if model_specific_prompt_kwargs is None:
+        model_specific_prompt_kwargs = {}
+    pre_prompt = ""
+    post_prompt = ""
+    if "pre_prompt" in model_specific_prompt_kwargs:
+        pre_prompt = model_specific_prompt_kwargs["pre_prompt"]
+    if "post_prompt" in model_specific_prompt_kwargs:
+        post_prompt = model_specific_prompt_kwargs["post_prompt"]
+    return f"{pre_prompt}{question}{post_prompt}"
+
+
+def aokvqa_doc_to_text_custom_prompt(doc, model_specific_prompt_kwargs=None):
+    question = doc["question"] + "Choose the best option from the choices provided:"
     question += "\n" + f"A. {doc['choices'][0]}\n"
     question += f"B. {doc['choices'][1]}\n"
     question += f"C. {doc['choices'][2]}\n"

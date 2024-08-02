@@ -1,5 +1,5 @@
 group: a-okvqa
-task: a-okvqa_val_llama_pretrain
+task: a-okvqa_val_vicuna_pretrain
 dataset_path: HuggingFaceM4/A-OKVQA
 test_split: validation
 output_type: generate_until
@@ -21,6 +21,7 @@ filter_list:
     filter:
       - function: "regex"
         regex_pattern: '^(.*?)(?=[\n"\\])'
+      - function: "vicuna_pretrain_mc"
       - function: "take_first"
 process_results: !function utils.aokvqa_process_results
 model_specific_prompt_kwargs:

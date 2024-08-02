@@ -1,7 +1,7 @@
 dataset_path: lmms-lab/RealWorldQA
 dataset_kwargs:
   token: True
-task: "realworldqa_llama_pretrain"
+task: "realworldqa_finetuned_plain"
 test_split: test
 output_type: generate_until
 doc_to_visual: !function utils.realworldqa_doc_to_visual
@@ -18,6 +18,9 @@ generation_kwargs:
 filter_list:
   - name: "flexible-extract"
     filter:
+      - function: "regex"
+        regex_pattern: 'answer is: (.*?)\.'
+      - function: "true_false"
       - function: !function utils.NumberWordsToDigitsFilter
       - function: !function utils.MultiChoiceRegexFilter
         group_select: 0
@@ -35,6 +38,12 @@ metric_list:
 model_specific_prompt_kwargs:
   default:
     pre_prompt: "User: "
-    post_prompt: "\nAssistant: The best answer is \""
+    post_prompt: "\nAssistant:"
+  gpt4v:
+    pre_prompt: ""
+    post_prompt: ""
+  xcomposer2_4khd:
+    pre_prompt: "[UNUSED_TOKEN_146]user\nQuestion: "
+    post_prompt: "[UNUSED_TOKEN_145]\n[UNUSED_TOKEN_146]assistant\nThe answer is"
 metadata:
   - version: 0.0

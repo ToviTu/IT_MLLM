@@ -34,4 +34,5 @@ filter_list:
       - function: "regex"
         regex_pattern: "(.*)[\\n|\"]"
       - function: "gqa_pretrain_filter"
+      - function: "true_false"
       - function: "take_first"

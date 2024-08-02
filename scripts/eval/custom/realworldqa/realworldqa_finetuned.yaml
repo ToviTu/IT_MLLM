@@ -37,8 +37,8 @@ metric_list:
       
 model_specific_prompt_kwargs:
   default:
-    pre_prompt: ""
-    post_prompt: ""
+    pre_prompt: "User: "
+    post_prompt: "\nAssistant:"
   gpt4v:
     pre_prompt: ""
     post_prompt: ""
