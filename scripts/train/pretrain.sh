@@ -12,7 +12,7 @@ deepspeed --master_port=7000 \
     --include=localhost:0,1,2,3 \
     ${WORKING_DIR}/llava/train/train_mem.py \
     --deepspeed ${WORKING_DIR}/scripts/config/zero2.json \
-    --model_name_or_path lmsys/vicuna-7b-v1.5 \
+    --model_name_or_path google/gemma-2-2b \
     --version plain \
     --data_path ${STORAGE_DIR}/datasets/llava/blip_laion_cc_sbu_558k.json \
     --image_folder ${STORAGE_DIR}/datasets/llava/images \
@@ -25,7 +25,7 @@ deepspeed --master_port=7000 \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
     --bf16 True \
-    --output_dir ${STORAGE_DIR}/models/llava-vicuna-7b-pretrain-fb \
+    --output_dir ${STORAGE_DIR}/models/llava-gemma2-2b-pretrain \
     --num_train_epochs 1 \
     --per_device_train_batch_size 64 \
     --per_device_eval_batch_size 4 \

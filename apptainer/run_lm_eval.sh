@@ -7,5 +7,5 @@
 echo $HF_HOME
 
 # Execute script
-singularity run --nv --bind /scratch,/storage1 /scratch/t.tovi/lang-modeling.sif \
+singularity run --nv --bind /scratch,/storage1 /scratch/vision_share/eval.sif \
     bash /home/research/jianhong.t/Instruction-tuned-Flamingo-MLLM/scripts/eval/lm-eval.sh

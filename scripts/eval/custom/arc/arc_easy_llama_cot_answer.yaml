@@ -1,0 +1,28 @@
+dataset_name: ARC-Easy
+dataset_path: ai2_arc
+task: arc_easy_llama_cot_answer
+description: ''
+should_decontaminate: false
+doc_to_decontamination_query: 'Question: {{question}}\nAnswer:'
+doc_to_text: !function helper.prompt_llama_cot_answer
+doc_to_target: "{{choices.label.index(answerKey)}}"
+doc_to_choice: "{{choices.label}}"
+fewshot_delimiter: \n\n
+group:
+- ai2_arc
+metadata:
+  version: 1.0
+metric_list:
+  - metric: acc
+    aggregation: mean
+    higher_is_better: true
+  - metric: acc_norm
+    aggregation: mean
+    higher_is_better: true
+num_fewshot: 0
+output_type: multiple_choice
+repeats: 1
+target_delimiter: ' '
+test_split: test
+training_split: train
+validation_split: validation

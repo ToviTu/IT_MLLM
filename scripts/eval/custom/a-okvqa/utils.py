@@ -11,11 +11,16 @@ from lmms_eval.tasks._task_utils.file_utils import generate_submission_file
 from lmms_eval.tasks._task_utils.vqa_eval_metric import EvalAIAnswerProcessor
 
 from loguru import logger as eval_logger
+from llava.anno.prompt_template import llava_cmc
 
 
 def aokvqa_doc_to_visual(doc):
     return [doc["image"].convert("RGB")]
 
+def multiple_choice_prompt(doc):
+    question = doc["question"]
+    choices = doc["choices"]
+    
 
 def aokvqa_process_results(doc, result):
     eval_ai_processor = EvalAIAnswerProcessor()

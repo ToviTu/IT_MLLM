@@ -19,12 +19,13 @@ def sampling_prob(list_of_sizes):
 
 def sample_from_list(datasets, probs, size):
     assert len(datasets) == len(probs)
-
+    counts = np.zeros(len(datasets), dtype=int)
     data = []
     while len(data) < size:
         idx = random.choices(range(len(datasets)), probs)
+        counts[idx[0]] += 1
         data.append(random.choice(datasets[idx[0]]))
-    return data
+    return data, counts
 
 def format_llava_train(data):
     outputs = []
@@ -63,9 +64,10 @@ if __name__ == '__main__':
     arc_train = get_llava_train(ARC, os.path.join(os.environ['STORAGE_DIR'], "results/anno/Yi_ARC_rationale.json"))
 
     sizes = [len(squad_train), len(strategyqa_train), len(commonsenseqa_train), len(cosmosqa_train), len(arc_train)]
-    probs = np.ones(len(sizes)) / len(sizes)
+    probs = np.array([1/4, 3/16, 3/16, 3/16, 3/16])
     datasets = [squad_train, strategyqa_train, commonsenseqa_train, cosmosqa_train, arc_train]
-    data = sample_from_list(datasets, probs, size)
+    data, counts = sample_from_list(datasets, probs, size)
+    print("Dataset distribution: ", counts)
     data = format_llava_train(data)
 
     with open(os.path.join(os.environ['STORAGE_DIR'], "datasets/llava/Yi_llava_train_balanced.json"), 'w') as f:

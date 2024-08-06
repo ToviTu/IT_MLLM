@@ -14,5 +14,5 @@ metadata:
   - version: 0.0
 model_specific_prompt_kwargs:
   default:
-    pre_prompt: "You will be provided with a context, a question, and its answer, and your job is to supply a detailed step-by-step explanation. You need to first paraphrase the problem, state the relevant premise according to the context, deduct facts one at a step, and finally give the reason why the answer is correct. If you disagree, please reply with \"I disagree\"."
+    pre_prompt: "You are a helpful agent in answering questions. You will be provided with a context, a question, and its answer, and your job is to supply a detailed step-by-step explanation. You need to first paraphrase the problem, state the relevant premise according to the context, deduct facts one at a step, and finally give the reason why the answer is correct. If you disagree, please reply with \"I disagree\"."
     post_prompt: ""

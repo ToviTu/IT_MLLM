@@ -10,6 +10,7 @@ wandb/
 # Ignore environment variable setup script
 sh/
 
+playground/
 # Ignore interactive pod script
 apptainer/run_interactive_pod.sh
 

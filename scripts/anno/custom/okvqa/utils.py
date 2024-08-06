@@ -36,8 +36,12 @@ def doc_to_text(doc, model_specific_prompt_kwargs=None):
     # Load Template for LLaVA
     conv = conv_templates["v1"].copy()
 
-    answers = doc['direct_answers']
-    answers = re.findall(r"'(.*?)'", answers)
+    choices = doc['choices']
+    #choices = re.findall(r"'(.*?)'", choices)
+    choices_formatted = "Choose the best option from the following:\n" + "\n".join(choices)
+
+    answer_labels = ["A", "B", "C", "D"]
+    answer = answer_labels[int(doc['correct_choice_idx'])]
 
     if model_specific_prompt_kwargs is None:
         model_specific_prompt_kwargs = {}
@@ -55,7 +59,7 @@ def doc_to_text(doc, model_specific_prompt_kwargs=None):
     # conv.append_message(conv.roles[1], None)
 
     cot_prompt = f"{pre_prompt} Question: {CoT_example['question']} Answer: {CoT_example['answer']}{post_prompt} Rationale: {CoT_example['rationale']}</s>"
-    prompt = f"{pre_prompt} <image>\nQuestion: {doc['question']} Answer: {random.choice(answers)}{post_prompt} Rationale:"
+    prompt = f"{pre_prompt} <image>\nQuestion: {doc['question']} {choices_formatted} Answer: {answer}{post_prompt} Rationale:"
     return cot_prompt + prompt
     return conv.get_prompt()
 

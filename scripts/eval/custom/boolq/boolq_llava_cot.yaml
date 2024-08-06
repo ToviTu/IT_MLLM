@@ -1,0 +1,34 @@
+dataset_path: super_glue
+dataset_name: boolq
+training_split: train
+validation_split: validation
+group:
+- boolq_qa
+task: boolq_llava_cot
+description: ''
+output_type: generate_until
+num_fewshot: 0
+repeats: 1
+target_delimiter: ' '
+fewshot_delimiter: "</s>"
+doc_to_text: !function helper.prompt_llava_cot
+doc_to_target: !function helper.prepare_gt
+should_decontaminate: false
+doc_to_decontamination_query: 'Question: {{question}}\nAnswer:'
+generation_kwargs:
+  until: None
+  max_length: 2048 #No limit
+  do_sample: false
+metric_list:
+- aggregation: mean
+  higher_is_better: true
+  ignore_case: true
+  metric: exact_match
+filter_list:
+  - name: "extract_answer"
+    filter: 
+      - function: "regex"
+        regex_pattern: 'answer is: (.*?)\.'
+      - function: "take_first"
+metadata:
+  version: 1.0
