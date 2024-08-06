@@ -1,0 +1,23 @@
+group: ok_vqa
+task: ok_vqa_val2014
+test_split: val2014
+include: _default_template_vqa_yaml
+generation_kwargs:
+  max_new_tokens: 5
+  temperature: 0
+  top_p: 1.0
+  num_beams: 1
+  do_sample: false
+  until:
+    - "\""
+model_specific_prompt_kwargs:
+  default:
+    pre_prompt: "User: "
+    post_prompt: "\nAssistant: The best answer is \""
+filter_list:
+  - name: "strict-match"
+    filter:
+      - function: "regex"
+        regex_pattern: "(.*)[\\n|\"]"
+      - function: "take_first"
+# Llama-pretrain

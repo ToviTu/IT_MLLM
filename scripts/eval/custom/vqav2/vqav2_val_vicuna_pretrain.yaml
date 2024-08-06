@@ -1,0 +1,21 @@
+task: "vqav2_val_vicuna_pretrain"
+include: _default_template_vqav2_yaml
+test_split: validation
+metric_list:
+  - metric: exact_match
+    aggregation: mean
+    higher_is_better: true
+    ignore_case: true
+    ignore_punctuation: true
+process_results: !function utils.vqav2_process_results_val
+filter_list:
+  - name: "strict-match"
+    filter:
+      - function: "regex"
+        regex_pattern: "(.*)[\\n|\"]"
+      - function: "gqa_pretrain_filter"
+      - function: "take_first"
+model_specific_prompt_kwargs:
+  default:
+    pre_prompt: "User: "
+    post_prompt: "\nAssistant: The best answer is \""

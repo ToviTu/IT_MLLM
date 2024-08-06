@@ -22,6 +22,6 @@ process_results: !function utils.aokvqa_process_results
 model_specific_prompt_kwargs:
   default:
     pre_prompt: ""
-    post_prompt: "\nWhen the provided information is insufficient, respond with 'Unanswerable'.\nAnswer the question using a single word or phrase."
+    post_prompt: "\nAnswer the question using a single word or phrase."
 metadata:
   - version: 0.0

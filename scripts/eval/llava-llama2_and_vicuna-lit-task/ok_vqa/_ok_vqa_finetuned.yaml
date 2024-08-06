@@ -1,3 +1,0 @@
-group: ok_vqa_finetuned
-task:
-- ok_vqa_val2014_finetuned
